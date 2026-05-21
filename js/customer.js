@@ -369,7 +369,7 @@ function submitServiceRequest(type) {
 
   // Transmit Request
   if (socket && socket.connected) {
-    socket.emit('request:create', { table: tableNumber, type: type });
+    socket.emit('request:create', { id: requestData.id, table: tableNumber, type: type });
   } else {
     // Via Broadcast Fallback
     let localRequests = [];

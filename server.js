@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
     }
 
     const newRequest = {
-      id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      id: data.id || `req_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       table: String(table),
       type: type,
       status: 'new',
