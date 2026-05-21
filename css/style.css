@@ -2084,3 +2084,107 @@ p {
   100% { transform: translate3d(80px, -70px, 0) scale(1.15); }
 }
 
+/* ==========================================================================
+   RESPONSIVE DESIGN FOR STAFF DASHBOARD (Mobile & Tablet)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Header adjustment */
+  .dashboard-header {
+    flex-direction: column;
+    padding: 1.25rem 1rem;
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .dashboard-brand {
+    justify-content: center;
+  }
+  
+  .dashboard-nav {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .nav-tab {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    flex: 1 1 calc(50% - 0.5rem);
+    justify-content: center;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+  }
+  
+  .staff-welcome-tag {
+    justify-content: center;
+  }
+  
+  .audio-toggle-btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Main container padding */
+  .dashboard-main {
+    padding: 1rem;
+  }
+
+  /* Stats container layout */
+  .stats-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Control bar layout */
+  .control-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .filter-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .filter-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .clear-completed-btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Workboard Grid layout */
+  .workboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .board-column {
+    min-height: auto;
+    padding: 1rem;
+  }
+  
+  /* User Roster Table adjustments */
+  .user-management-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;
+  }
+  
+  .roster-table th, .roster-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+}
+
