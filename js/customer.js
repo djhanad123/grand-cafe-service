@@ -169,8 +169,8 @@ function processRequestUpdate(updatedReq) {
     }
   }
 
-  // If a request is marked completed, schedule its removal from customer view in 5 seconds
-  if (updatedReq.status === 'completed') {
+  // If a request is marked seen or completed, schedule its removal from customer view in 5 seconds
+  if (updatedReq.status === 'seen' || updatedReq.status === 'completed') {
     setTimeout(() => {
       activeTableRequests = activeTableRequests.filter(r => r.id !== updatedReq.id);
       renderTracker();
@@ -192,12 +192,13 @@ function loadActiveRequestsFromStorage() {
     });
 
     // Filter requests for our specific table
-    // Keep active ones (new/seen) or very recently completed ones (within 5s ago)
+    // Keep active ones (new) or very recently responded/completed ones (within 5s ago)
     const fiveSecondsAgo = Date.now() - 5000;
     const newRequests = allRequests.filter(req => {
       if (req.table !== tableNumber) return false;
-      if (req.status !== 'completed') return true;
-      return new Date(req.completedAt || req.createdAt).getTime() > fiveSecondsAgo;
+      if (req.status === 'new') return true;
+      const updatedAt = req.seenAt || req.completedAt || req.createdAt;
+      return new Date(updatedAt).getTime() > fiveSecondsAgo;
     });
 
     // Compare new requests with old status map to trigger chimes in fallback mode
