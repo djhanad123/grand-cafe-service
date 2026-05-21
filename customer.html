@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grand Café - Table Service</title>
+  <!-- SEO & Mobile App tags -->
+  <meta name="description" content="Instant tableside customer service at Grand Café. Scan, tap, and receive service immediately.">
+  <meta name="theme-color" content="#0c0805">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Custom Brand Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Socket.io Client (loaded optionally, with fallback logic) -->
+  <script src="/socket.io/socket.io.js" defer onerror="console.log('Socket.io library not found. Seamlessly falling back to browser-native BroadcastChannel API!')"></script>
+</head>
+<body>
+
+  <!-- Animated Luxury Ambient Background -->
+  <div class="ambient-bg-glow">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <div class="customer-container">
+    
+    <!-- Top Branded Header -->
+    <header class="brand-header">
+      <div class="brand-logo-container">
+        <!-- Logo from workspace folder -->
+        <img src="grand-logo.png" alt="Grand Café Logo" class="brand-logo" id="logo-img" onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=150&q=80';">
+      </div>
+      <h1>Grand Café</h1>
+      <p>How can we assist you today?</p>
+    </header>
+
+    <!-- Table Identification Pill -->
+    <div class="table-badge-container">
+      <div class="table-badge" id="tableBadge">
+        <span class="table-badge-dot"></span>
+        <span id="tableText">Detecting Table...</span>
+      </div>
+    </div>
+
+    <!-- Main Action Buttons -->
+    <main class="actions-grid">
+      
+      <!-- Action 1: Call Waiter -->
+      <button class="action-btn" id="btn-call_waiter" onclick="submitServiceRequest('call_waiter')">
+        <div class="btn-content">
+          <div class="btn-icon">
+            <!--🛎️ Bell Icon SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H18L16 10H8L6 18Z"/><path d="M12 2v2"/><path d="M2 22h20"/><path d="M12 4c-3.3 0-6 2.7-6 6v8h12v-8c0-3.3-2.7-6-6-6z"/></svg>
+          </div>
+          <div class="btn-texts">
+            <h3>Call Waiter</h3>
+            <p>Request assistance at your table</p>
+          </div>
+        </div>
+        <div class="btn-arrow">&rarr;</div>
+        <div class="cooldown-spinner" id="spinner-call_waiter"></div>
+      </button>
+
+      <!-- Action 2: Bring Water -->
+      <button class="action-btn" id="btn-bring_water" onclick="submitServiceRequest('bring_water')">
+        <div class="btn-content">
+          <div class="btn-icon">
+            <!--💧 Water Drop SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>
+          </div>
+          <div class="btn-texts">
+            <h3>Bring Water</h3>
+            <p>Request cold drinking water</p>
+          </div>
+        </div>
+        <div class="btn-arrow">&rarr;</div>
+        <div class="cooldown-spinner" id="spinner-bring_water"></div>
+      </button>
+
+      <!-- Action 3: Ask for Bill -->
+      <button class="action-btn" id="btn-ask_bill" onclick="submitServiceRequest('ask_bill')">
+        <div class="btn-content">
+          <div class="btn-icon">
+            <!--💵 Bill Card/Money SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" height="14" width="20" y="5" rx="2"/><line x1="6" x2="6.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="12" y2="12"/><path d="M12 9a2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+          </div>
+          <div class="btn-texts">
+            <h3>Ask for Bill</h3>
+            <p>Request the check & payment</p>
+          </div>
+        </div>
+        <div class="btn-arrow">&rarr;</div>
+        <div class="cooldown-spinner" id="spinner-ask_bill"></div>
+      </button>
+
+    </main>
+
+    <!-- Real-Time Request Status Tracker Panel (Moved above More Features) -->
+    <section class="guest-tracker-panel" id="trackerPanel" style="display: none;">
+      <h4 class="tracker-heading"><span></span> Active Request Status</h4>
+      <div class="tracker-cards-list" id="trackerList">
+        <!-- Live status cards loaded dynamically -->
+      </div>
+    </section>
+
+    <!-- Collapsible More Features Area -->
+    <div class="collapsible-section" id="more-features-section">
+      <button class="collapsible-trigger" id="more-features-trigger" onclick="toggleMoreFeatures()">
+        <span>More Features</span>
+        <svg class="chevron-icon" id="chevron-more-features" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      
+      <div class="collapsible-content" id="more-features-content">
+        <div class="actions-grid placeholder-grid" style="margin-top: 0.75rem;">
+          <!-- Placeholder: View Menu -->
+          <button class="action-btn placeholder-btn" disabled>
+            <div class="btn-content">
+              <div class="btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="btn-texts">
+                <h3>View Menu</h3>
+                <p>Browse dishes & beverages</p>
+              </div>
+            </div>
+            <span class="badge-soon">Soon</span>
+          </button>
+
+          <!-- Placeholder: Order Food -->
+          <button class="action-btn placeholder-btn" disabled>
+            <div class="btn-content">
+              <div class="btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div class="btn-texts">
+                <h3>Order Food</h3>
+                <p>Place orders from your phone</p>
+              </div>
+            </div>
+            <span class="badge-soon">Soon</span>
+          </button>
+
+          <!-- Placeholder: Give Feedback -->
+          <button class="action-btn placeholder-btn" disabled>
+            <div class="btn-content">
+              <div class="btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div class="btn-texts">
+                <h3>Give Feedback</h3>
+                <p>Share your café experience</p>
+              </div>
+            </div>
+            <span class="badge-soon">Soon</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Branded Footer -->
+    <footer class="customer-footer">
+      <p>&copy; 2026 Grand Café. Crafted for visual luxury & speed.</p>
+    </footer>
+
+  </div>
+
+  <!-- Elegant Success Overlay Modal -->
+  <div class="toast-overlay" id="successToast">
+    <div class="toast-content">
+      <div class="success-ring-container">
+        <div class="success-ring">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+      <h2 id="successTitle">Request Sent!</h2>
+      <p id="successMessage">Your request has been sent successfully. A waiter will be with you shortly.</p>
+      <button class="toast-btn" onclick="closeSuccessToast()">Got It</button>
+    </div>
+  </div>
+
+  <!-- Custom Customer JS Script -->
+  <script src="js/customer.js"></script>
+</body>
+</html>

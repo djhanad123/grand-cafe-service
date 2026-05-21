@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grand Café - Staff Dashboard</title>
+  
+  <!-- Premium Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Socket.io Client (loaded optionally, with fallback logic) -->
+  <script src="/socket.io/socket.io.js" defer onerror="console.log('Socket.io library not found. Seamlessly falling back to browser-native BroadcastChannel API!')"></script>
+</head>
+<body>
+
+  <!-- Animated Luxury Ambient Background -->
+  <div class="ambient-bg-glow">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <!-- Staff Login Overlay -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-card" id="loginCard">
+      <img src="grand-logo.png" alt="Grand Café Logo" class="login-card-logo" onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=150&q=80';">
+      <h2>Staff Terminal</h2>
+      
+      <!-- Sliding views container -->
+      <div class="login-slider" id="loginSlider">
+        
+        <!-- Slide A: Staff Profile Selection -->
+        <div class="login-slide" id="staffSelectSlide">
+          <p style="margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--color-cream-dim);">Select your profile to unlock terminal.</p>
+          <div class="staff-list-grid" id="staffListGrid">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+        
+        <!-- Slide B: 4-Digit Passcode Keypad -->
+        <div class="login-slide" id="keypadSlide">
+          <div class="keypad-header">
+            <button class="btn-back-to-profiles" onclick="goBackToStaffSelect()" title="Back to staff list">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            </button>
+            <div class="keypad-user-title">
+              <span id="selectedStaffName">Admin</span>
+              <span id="selectedStaffRoleBadge" class="staff-profile-role-badge badge-admin">admin</span>
+            </div>
+          </div>
+          <p style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--color-cream-dim);">Enter your 4-digit PIN:</p>
+          
+          <div class="pin-dots-container" id="pinDotsContainer">
+            <div class="pin-dot" id="dot-0"></div>
+            <div class="pin-dot" id="dot-1"></div>
+            <div class="pin-dot" id="dot-2"></div>
+            <div class="pin-dot" id="dot-3"></div>
+          </div>
+          
+          <div class="keypad-grid">
+            <button class="keypad-btn" onclick="pressKeypad('1')">1</button>
+            <button class="keypad-btn" onclick="pressKeypad('2')">2</button>
+            <button class="keypad-btn" onclick="pressKeypad('3')">3</button>
+            <button class="keypad-btn" onclick="pressKeypad('4')">4</button>
+            <button class="keypad-btn" onclick="pressKeypad('5')">5</button>
+            <button class="keypad-btn" onclick="pressKeypad('6')">6</button>
+            <button class="keypad-btn" onclick="pressKeypad('7')">7</button>
+            <button class="keypad-btn" onclick="pressKeypad('8')">8</button>
+            <button class="keypad-btn" onclick="pressKeypad('9')">9</button>
+            <button class="keypad-btn action-key" onclick="clearKeypad()">C</button>
+            <button class="keypad-btn" onclick="pressKeypad('0')">0</button>
+            <button class="keypad-btn action-key" onclick="backspaceKeypad()">⌫</button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    
+    <!-- Header Bar -->
+    <header class="dashboard-header">
+      <div class="dashboard-brand">
+        <!-- Branded logo from folder -->
+        <img src="grand-logo.png" alt="Grand Café Logo" class="dashboard-logo" onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=150&q=80';">
+        <span class="staff-terminal-title-badge">Staff Terminal</span>
+      </div>
+      
+      <!-- Tab Navigation -->
+      <nav class="dashboard-nav">
+        <button class="nav-tab active" id="tab-requests" onclick="switchTab('requests')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><line x1="13" x2="17" y1="8" y2="8"/><line x1="13" x2="17" y1="15" y2="15"/></svg>
+          Live Requests
+        </button>
+        <button class="nav-tab" id="tab-qr" onclick="switchTab('qr')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><rect x="3" y="3" width="9" height="9"/><rect x="12" y="12" width="9" height="9"/><rect x="3" y="12" width="9" height="9"/><rect x="12" y="3" width="9" height="9"/></svg>
+          QR Station
+        </button>
+        <button class="nav-tab" id="tab-users" onclick="switchTab('users')" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          User Management
+        </button>
+      </nav>
+
+      <!-- Audio Mute Control & Identity Status -->
+      <div class="header-actions">
+        <!-- Welcome badge -->
+        <div class="staff-welcome-tag" id="staffWelcomeWidget">
+          👤 <span id="staffNameDisplay">Waiter Sarah</span>
+          <span class="staff-logout-link" onclick="handleStaffLogout()">Sign Out</span>
+        </div>
+
+        <button class="audio-toggle-btn" id="audioToggle" onclick="toggleAudioMute()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="audio-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span id="audioStatusText">Sound On</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Area -->
+    <main class="dashboard-main">
+      
+      <!-- PANE 1: LIVE REQUESTS MONITOR -->
+      <div class="dashboard-pane active" id="pane-requests">
+        
+        <!-- Live summary metrics bar -->
+        <section class="stats-container">
+          <div class="stat-card stat-urgent">
+            <div class="stat-icon">🛎️</div>
+            <div class="stat-info">
+              <h3>Active Calls</h3>
+              <div class="stat-number" id="stat-active">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏱️</div>
+            <div class="stat-info">
+              <h3>Avg Response</h3>
+              <div class="stat-number" id="stat-avg-time">0m 0s</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">☕</div>
+            <div class="stat-info">
+              <h3>Total Requests</h3>
+              <div class="stat-number" id="stat-total">0</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Filters and controls toolbar -->
+        <section class="control-bar">
+          <div class="filter-group">
+            <button class="filter-btn active" id="filter-all" onclick="filterRequests('all')">All</button>
+            <button class="filter-btn" id="filter-waiter" onclick="filterRequests('call_waiter')">Waiter Calls</button>
+            <button class="filter-btn" id="filter-water" onclick="filterRequests('bring_water')">Water</button>
+            <button class="filter-btn" id="filter-bill" onclick="filterRequests('ask_bill')">Bills</button>
+          </div>
+          
+          <button class="clear-completed-btn" onclick="clearCompletedRequests()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+            Clear Completed
+          </button>
+        </section>
+
+        <!-- Requests boards -->
+        <section class="workboard-grid">
+          
+          <!-- Column 1: New Requests (Glowing alert) -->
+          <div class="board-column col-new">
+            <div class="column-header">
+              <h2><span></span> New requests</h2>
+              <div class="column-count" id="count-new">0</div>
+            </div>
+            <div class="cards-container" id="container-new">
+              <!-- Cards rendered dynamically -->
+              <div class="empty-state">
+                <i>☕</i>
+                <p>No new requests.<br>Tables are currently relaxed.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Seen / In Progress -->
+          <div class="board-column col-seen">
+            <div class="column-header">
+              <h2><span></span> In Progress</h2>
+              <div class="column-count" id="count-seen">0</div>
+            </div>
+            <div class="cards-container" id="container-seen">
+              <!-- Cards rendered dynamically -->
+              <div class="empty-state">
+                <i>✓</i>
+                <p>No active tasks in progress.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3: Completed Archive -->
+          <div class="board-column col-completed">
+            <div class="column-header">
+              <h2><span></span> Completed</h2>
+              <div class="column-count" id="count-completed">0</div>
+            </div>
+            <div class="cards-container" id="container-completed">
+              <!-- Cards rendered dynamically -->
+              <div class="empty-state">
+                <i>✓</i>
+                <p>Completed archive is empty.</p>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+      <!-- PANE 2: QR GENERATION STATION -->
+      <div class="dashboard-pane" id="pane-qr">
+        <section class="qr-panel">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect x="3" y="3" width="9" height="9"/><rect x="12" y="12" width="9" height="9"/><rect x="3" y="12" width="9" height="9"/><rect x="12" y="3" width="9" height="9"/></svg>
+            Table QR Generation Station
+          </h2>
+          <p>Configure and print beautifully branded tableside QR cards. Customers scan these cards to instantly connect their tables with this dashboard.</p>
+          
+          <div class="qr-setup-grid">
+            
+            <!-- Setup settings panel -->
+            <div class="qr-form-card">
+              <div class="form-group">
+                <label for="qr-base-url">Base Deployment URL</label>
+                <input type="url" id="qr-base-url" class="form-input" value="" placeholder="http://grandcafe.app">
+                <small style="font-size: 0.75rem; color: var(--color-cream-dim); opacity: 0.7;">
+                  Points QR codes to this host domain. (Leave blank to use current window location)
+                </small>
+              </div>
+              
+              <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label for="qr-start-table">Start Table #</label>
+                  <input type="number" id="qr-start-table" class="form-input" value="1" min="1">
+                </div>
+                <div>
+                  <label for="qr-end-table">End Table #</label>
+                  <input type="number" id="qr-end-table" class="form-input" value="12" min="1">
+                </div>
+              </div>
+              
+              <button class="btn-generate-qr" onclick="generateQRTableCards()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Generate QR Cards
+              </button>
+            </div>
+
+            <!-- Print Display Panel -->
+            <div class="qr-cards-display">
+              <div class="qr-header-actions">
+                <h3>Card Previews</h3>
+                <button class="btn-print-action" onclick="window.print()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  Print QR Cards
+                </button>
+              </div>
+              
+              <!-- Cards dynamic printing viewport -->
+              <div class="qr-cards-grid" id="qrCardsContainer">
+                <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; opacity: 0.5;">
+                  <p>Click "Generate QR Cards" on the left to create card previews.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- PANE 3: USER MANAGEMENT TERMINAL (Admin Only) -->
+      <div class="dashboard-pane" id="pane-users">
+        <section class="user-management-grid">
+          
+          <!-- Registration form card -->
+          <div class="user-form-card">
+            <div>
+              <h3>Register Staff</h3>
+              <p style="margin-bottom: 0; font-size: 0.85rem; color: var(--color-cream-dim);">Create a new staff member profile.</p>
+            </div>
+            
+            <form id="new-user-form" onsubmit="event.preventDefault(); registerNewStaff();">
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="new-user-name">Staff Name</label>
+                <input type="text" id="new-user-name" class="form-input" placeholder="e.g. Waiter John" required>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="new-user-role">Role</label>
+                <select id="new-user-role" class="form-input" required style="background: rgba(20, 13, 8, 0.7); cursor: pointer; color: var(--color-cream);">
+                  <option value="waiter" selected>Waiter</option>
+                  <option value="cashier">Cashier</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="new-user-pin">4-Digit PIN Passcode</label>
+                <input type="text" id="new-user-pin" class="form-input" maxlength="4" pattern="\d{4}" placeholder="4 numbers, e.g. 5566" title="Must be exactly 4 digits" required oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+              </div>
+              
+              <button type="submit" class="btn-generate-qr" style="margin-top: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                Create Staff User
+              </button>
+            </form>
+          </div>
+          
+          <!-- Roster list card -->
+          <div class="roster-card">
+            <h3>Active Staff Roster</h3>
+            <div class="roster-table-container">
+              <table class="roster-table">
+                <thead>
+                  <tr>
+                    <th>Staff Name</th>
+                    <th>Role</th>
+                    <th>PIN (Auth)</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="staffRosterBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+        </section>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Custom Dashboard JS Script -->
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
