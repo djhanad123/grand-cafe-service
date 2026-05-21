@@ -438,6 +438,24 @@ function initNetwork() {
         }
       });
 
+      socket.on('staff:list', (data) => {
+        console.log('Received synced staff list from server:', data);
+        activeStaffRoster = data;
+        
+        // Sync local storage as fallback cache in case we go offline!
+        localStorage.setItem('grand_cafe_staff_users', JSON.stringify(activeStaffRoster));
+        
+        // Render login grid and administrative roster table
+        renderStaffGrid();
+        if (loggedInRole === 'admin') {
+          renderStaffRoster();
+        }
+      });
+
+      socket.on('staff:error', (err) => {
+        alert(`Staff Error: ${err.message}`);
+      });
+
     } catch (e) {
       console.warn('Dashboard socket setup failed. Launching Broadcast fallback.', e);
       initBroadcastFallback();
@@ -914,6 +932,13 @@ function registerNewStaff() {
     return;
   }
   
+  if (socket && socket.connected) {
+    socket.emit('staff:create', { username: name, pin: pin, role: role });
+    document.getElementById('new-user-form').reset();
+    playNotificationChime();
+    return;
+  }
+  
   const newUser = { username: name, pin: pin, role: role };
   activeStaffRoster.push(newUser);
   
@@ -940,6 +965,12 @@ function deleteStaffUser(username) {
   
   const confirmDelete = confirm(`Are you sure you want to delete staff profile "${username}"?`);
   if (!confirmDelete) return;
+  
+  if (socket && socket.connected) {
+    socket.emit('staff:delete', username);
+    playFailureBuzz();
+    return;
+  }
   
   activeStaffRoster = activeStaffRoster.filter(s => s.username !== username);
   
