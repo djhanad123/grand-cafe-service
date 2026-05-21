@@ -28,6 +28,12 @@ app.use(express.static(__dirname));
 // }
 let serviceRequests = [];
 
+// In-memory data store for staff users (synced globally)
+let staffRoster = [
+  { username: 'Admin', pin: '4450', role: 'admin' }
+];
+
+
 // Clean up old completed requests (older than 2 hours) to avoid memory growth
 setInterval(() => {
   const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
@@ -46,6 +52,7 @@ io.on('connection', (socket) => {
   socket.on('dashboard:init', () => {
     socket.join('dashboard-room');
     socket.emit('request:list', serviceRequests);
+    socket.emit('staff:list', staffRoster);
     console.log(`Dashboard joined room and received request list: ${serviceRequests.length} requests`);
   });
 
@@ -137,6 +144,44 @@ io.on('connection', (socket) => {
     
     // Broadcast refreshed list to dashboards
     io.to('dashboard-room').emit('request:list', serviceRequests);
+  });
+
+  // Admin capability: create new staff profile and sync globally
+  socket.on('staff:create', (newStaff) => {
+    const { username, pin, role } = newStaff;
+    if (!username || !pin || !role) return;
+
+    const name = username.trim();
+    const isDuplicate = staffRoster.some(s => s.username.toLowerCase() === name.toLowerCase());
+    if (isDuplicate) {
+      socket.emit('staff:error', { message: 'A staff member with this name already exists.' });
+      return;
+    }
+
+    if (!/^\d{4}$/.test(pin.trim())) {
+      socket.emit('staff:error', { message: 'Passcode PIN must be exactly 4 digits.' });
+      return;
+    }
+
+    staffRoster.push({ username: name, pin: pin.trim(), role: role });
+    console.log(`Staff registered on server: ${name} (${role})`);
+
+    // Broadcast refreshed list to all dashboards
+    io.to('dashboard-room').emit('staff:list', staffRoster);
+  });
+
+  // Admin capability: delete staff profile and sync globally
+  socket.on('staff:delete', (username) => {
+    if (username === 'Admin') {
+      socket.emit('staff:error', { message: 'Primary Admin cannot be deleted.' });
+      return;
+    }
+
+    staffRoster = staffRoster.filter(s => s.username !== username);
+    console.log(`Staff deleted on server: ${username}`);
+
+    // Broadcast refreshed list to all dashboards
+    io.to('dashboard-room').emit('staff:list', staffRoster);
   });
 
   socket.on('disconnect', () => {
