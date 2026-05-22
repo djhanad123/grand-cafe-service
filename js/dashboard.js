@@ -274,16 +274,19 @@ function setupStaffUI() {
 
 function applyRoleGates() {
   const tabUsers = document.getElementById('tab-users');
+  const tabQr = document.getElementById('tab-qr');
   const clearCompletedBtn = document.querySelector('.clear-completed-btn');
   
   if (loggedInRole === 'admin') {
     if (tabUsers) tabUsers.style.display = 'flex';
+    if (tabQr) tabQr.style.display = 'flex';
     if (clearCompletedBtn) {
       clearCompletedBtn.style.display = 'flex';
       clearCompletedBtn.disabled = false;
     }
   } else if (loggedInRole === 'cashier') {
     if (tabUsers) tabUsers.style.display = 'none';
+    if (tabQr) tabQr.style.display = 'flex';
     if (clearCompletedBtn) {
       clearCompletedBtn.style.display = 'flex';
       clearCompletedBtn.disabled = false;
@@ -294,10 +297,14 @@ function applyRoleGates() {
   } else {
     // Waiter
     if (tabUsers) tabUsers.style.display = 'none';
+    if (tabQr) tabQr.style.display = 'none';
     if (clearCompletedBtn) {
       clearCompletedBtn.style.display = 'none';
     }
     if (document.getElementById('pane-users') && document.getElementById('pane-users').classList.contains('active')) {
+      switchTab('requests');
+    }
+    if (document.getElementById('pane-qr') && document.getElementById('pane-qr').classList.contains('active')) {
       switchTab('requests');
     }
   }
