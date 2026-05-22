@@ -517,6 +517,12 @@ function initNetwork() {
         renderMenuManager();
       });
 
+      // Listen for database status updates
+      socket.on('db:status', (data) => {
+        console.log('Received database status from server:', data);
+        updateDbWarningBanner(data.isConnected);
+      });
+
     } catch (e) {
       console.warn('Dashboard socket setup failed. Launching Broadcast fallback.', e);
       initBroadcastFallback();
@@ -1299,10 +1305,34 @@ function deleteStaffUser(username) {
   playFailureBuzz();
 }
 
+// Database Persistent Storage Connection Warning Helpers
+function updateDbWarningBanner(isConnected) {
+  const banner = document.getElementById('db-warning-banner');
+  if (banner) {
+    if (isConnected) {
+      banner.style.display = 'none';
+    } else {
+      banner.style.display = 'flex';
+    }
+  }
+}
+
+async function checkDbStatus() {
+  try {
+    const res = await fetch('/api/db-status');
+    const data = await res.json();
+    updateDbWarningBanner(data.isConnected);
+  } catch (err) {
+    console.error('Failed to fetch database connection status from server:', err);
+    updateDbWarningBanner(false); // Default to showing warning if network call fails
+  }
+}
+
 // 10. Startup Initialization
 window.addEventListener('DOMContentLoaded', () => {
   checkStaffSession();
   initNetwork();
+  checkDbStatus(); // Immediate database status check
   
   if (!socket || !socket.connected) {
     loadMenuFromLocal();

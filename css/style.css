@@ -2624,6 +2624,40 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
+/* Database Resiliency Volatile Banner */
+.db-warning-banner {
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.25), rgba(243, 156, 18, 0.25));
+  border: 1px solid rgba(231, 76, 60, 0.45);
+  border-radius: 12px;
+  padding: 0.95rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+  backdrop-filter: blur(10px);
+  animation: bannerPulse 4s infinite ease-in-out;
+}
+
+.db-warning-banner svg {
+  color: #e74c3c;
+  flex-shrink: 0;
+  animation: iconBlink 2s infinite ease-in-out;
+}
+
+@keyframes bannerPulse {
+  0%, 100% { border-color: rgba(231, 76, 60, 0.45); box-shadow: 0 4px 15px rgba(0,0,0,0.25); }
+  50% { border-color: rgba(243, 156, 18, 0.65); box-shadow: 0 4px 20px rgba(243, 156, 18, 0.15); }
+}
+
+@keyframes iconBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.95); }
+}
+
 
 
 

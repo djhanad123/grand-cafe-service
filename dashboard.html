@@ -79,6 +79,12 @@
 
   <div class="dashboard-container">
     
+    <!-- Volatile Storage Warning Banner -->
+    <div id="db-warning-banner" class="db-warning-banner" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span><strong>Volatile Storage Mode Active:</strong> Connection to MongoDB Atlas failed. All changes are temporary and will be lost on container restart. Please whitelist dynamic IPs on MongoDB Atlas.</span>
+    </div>
+
     <!-- Header Bar -->
     <header class="dashboard-header">
       <div class="dashboard-brand">

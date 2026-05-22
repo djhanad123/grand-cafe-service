@@ -189,11 +189,16 @@ async function seedMenuItems() {
   }
 }
 
-// Database Connection
+// Database Connection Options with strict timeouts
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s if blocked by Atlas firewall
+  socketTimeoutMS: 45000,
+};
+
 const mongoUri = process.env.MONGODB_URI;
 if (mongoUri) {
   console.log('Connecting to MongoDB Atlas...');
-  mongoose.connect(mongoUri)
+  mongoose.connect(mongoUri, mongooseOptions)
     .then(async () => {
       console.log('✅ Connected to MongoDB Atlas successfully.');
       isMongoConnected = true;
@@ -202,7 +207,7 @@ if (mongoUri) {
       await seedMenuItems();
     })
     .catch((err) => {
-      console.error('❌ Failed to connect to MongoDB Atlas. Falling back to volatile in-memory storage.', err);
+      console.error('❌ Failed to connect to MongoDB Atlas. Falling back to volatile in-memory storage:', err.message);
       isMongoConnected = false;
     });
 } else {
@@ -309,6 +314,9 @@ setInterval(async () => {
 
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
+
+  // Emit dynamic database connectivity status immediately
+  socket.emit('db:status', { isConnected: isDbConnected() });
 
   // Send menu list on connection so customer and staff both get it instantly
   (async () => {
@@ -755,6 +763,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
   });
+});
+
+// Database Status API
+app.get('/api/db-status', (req, res) => {
+  res.json({ isConnected: isDbConnected() });
 });
 
 // Serve index page or redirect to customer view
