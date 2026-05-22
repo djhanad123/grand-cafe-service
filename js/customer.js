@@ -495,6 +495,54 @@ function filterCustomerCategory(category) {
   renderCustomerMenu();
 }
 
+const categoryDetails = {
+  'all': {
+    title: '✨ Premium Selection',
+    desc: 'Indulge in our curated selection of hot and cold beverages, crafted by artisan baristas for a luxurious café experience.',
+    sketch: 'assets/images/menu_header_sketch.png'
+  },
+  'Hot Coffee': {
+    title: '☕ Hot Coffee',
+    desc: 'Bold, rich, and aromatic espresso recipes balanced perfectly with textured milk for a velvety finish.',
+    sketch: 'assets/images/hot_coffee_sketch.png'
+  },
+  'Iced Coffee': {
+    title: '🧊 Chilled Coffee',
+    desc: 'Sweet, smooth, and refreshing espresso infusions poured cold over ice for a sophisticated cool-down.',
+    sketch: 'assets/images/iced_coffee_sketch.png'
+  },
+  'Matcha': {
+    title: '🍵 Whisked Matcha',
+    desc: 'Shade-grown, organic Japanese green tea, stone-ground and whisked with velvety steamed or iced milk.',
+    sketch: 'assets/images/matcha_sketch.png'
+  },
+  'Iced Tea': {
+    title: '🍹 Infused Iced Tea',
+    desc: 'Artisanal loose-leaf teas cold-brewed and shaken with fresh citrus, sweet herbs, and ice for maximum energy.',
+    sketch: 'assets/images/iced_tea_sketch.png'
+  },
+  'Milkshakes': {
+    title: '🥤 Dessert Shakes',
+    desc: 'Decadent, creamy milkshakes blended with house-made syrups, topped with fresh whipped cream and a cherry.',
+    sketch: 'assets/images/milkshake_sketch.png'
+  },
+  'Mojitos': {
+    title: '🌱 Sparkling Mojitos',
+    desc: 'Refreshing tall coolers crafted with muddled fresh garden mint, tart lime wedges, and sparkling sodas.',
+    sketch: 'assets/images/mojito_sketch.png'
+  },
+  'Lemonades': {
+    title: '🍋 Crafted Lemonades',
+    desc: 'Zesty, fresh-squeezed citrus concoctions and special cream combinations blended ice-cold for absolute purity.',
+    sketch: 'assets/images/lemonade_sketch.png'
+  },
+  'Hot Chocolate': {
+    title: '🍫 Steaming Cocoa',
+    desc: 'Gourmet melted Belgian chocolates blended into warm, creamy milk, topped with toasted mini marshmallows.',
+    sketch: 'assets/images/hot_chocolate_sketch.png'
+  }
+};
+
 function getCategorySketch(category) {
   switch (category) {
     case 'Hot Coffee': return 'assets/images/hot_coffee_sketch.png';
@@ -512,6 +560,20 @@ function getCategorySketch(category) {
 function renderCustomerMenu() {
   const grid = document.getElementById('customerMenuGrid');
   if (!grid) return;
+  
+  // Dynamically update the showcase hero image and text
+  const heroCard = document.getElementById('menuHeroCard');
+  if (heroCard) {
+    const details = categoryDetails[activeCategory] || categoryDetails['all'];
+    heroCard.innerHTML = `
+      <div class="menu-hero-img-container" style="background-image: url('${details.sketch}');"></div>
+      <div class="menu-hero-text-container">
+        <h3>${details.title}</h3>
+        <p>${details.desc}</p>
+      </div>
+    `;
+  }
+  
   grid.innerHTML = '';
   
   const searchVal = document.getElementById('cust-menu-search').value.trim().toLowerCase();
