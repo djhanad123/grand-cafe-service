@@ -22,6 +22,10 @@ let broadcastChannel = null;
 // Guest-side active requests cache
 let activeTableRequests = [];
 
+// Digital Menu State Variables
+let menuItems = [];
+let activeCategory = 'all';
+
 // Initialize Network Transports
 function initNetwork() {
   // Try Socket.io
@@ -43,6 +47,14 @@ function initNetwork() {
         if (updatedReq.table === tableNumber) {
           processRequestUpdate(updatedReq);
         }
+      });
+
+      // Listen for menu items updates
+      socket.on('menu:list', (data) => {
+        console.log('Received synced menu list from server:', data);
+        menuItems = data;
+        localStorage.setItem('grand_cafe_menu_items', JSON.stringify(menuItems));
+        renderCustomerMenu();
       });
     } catch (e) {
       console.warn('Socket.io initialization failed, falling back to BroadcastChannel.', e);
@@ -66,12 +78,16 @@ function initBroadcastFallback() {
     console.log('BroadcastChannel transport initialized.');
   }
 
-  // Load initial active states from localStorage
+  // Load initial active states and menu from localStorage
   loadActiveRequestsFromStorage();
+  loadMenuFromLocal();
 
   // Listen to cross-tab storage changes
-  window.addEventListener('storage', () => {
+  window.addEventListener('storage', (event) => {
     loadActiveRequestsFromStorage();
+    if (!event.key || event.key === 'grand_cafe_menu_items') {
+      loadMenuFromLocal();
+    }
   });
 }
 
@@ -418,5 +434,145 @@ window.addEventListener('DOMContentLoaded', () => {
   // Try loading once on start (safeguard)
   if (!socket || !socket.connected) {
     loadActiveRequestsFromStorage();
+    loadMenuFromLocal();
   }
 });
+
+// ==========================================================================
+// CUSTOMER PORTAL DIGITAL MENU ENGINE
+// ==========================================================================
+
+function loadMenuFromLocal() {
+  try {
+    const raw = localStorage.getItem('grand_cafe_menu_items');
+    menuItems = raw ? JSON.parse(raw) : [];
+    renderCustomerMenu();
+  } catch (e) {
+    console.error('Failed to parse menu items from storage:', e);
+  }
+}
+
+function openMenuDrawer() {
+  const drawer = document.getElementById('menuDrawer');
+  if (drawer) {
+    drawer.classList.add('open');
+    // Block background scroll when view-only menu drawer is open
+    document.body.style.overflow = 'hidden';
+    renderCustomerMenu();
+  }
+}
+
+function closeMenuDrawer() {
+  const drawer = document.getElementById('menuDrawer');
+  if (drawer) {
+    drawer.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+function filterCustomerCategory(category) {
+  activeCategory = category;
+  
+  // Clean active indicator classes off all category pills
+  document.querySelectorAll('.cust-category-pill').forEach(pill => {
+    pill.classList.remove('active');
+  });
+  
+  // Add active indicator tag back to targeted pill
+  let pillId = 'pill-all';
+  if (category === 'Hot Coffee') pillId = 'pill-hot-coffee';
+  else if (category === 'Iced Coffee') pillId = 'pill-iced-coffee';
+  else if (category === 'Matcha') pillId = 'pill-matcha';
+  else if (category === 'Iced Tea') pillId = 'pill-iced-tea';
+  else if (category === 'Milkshakes') pillId = 'pill-milkshakes';
+  else if (category === 'Mojitos') pillId = 'pill-mojitos';
+  else if (category === 'Lemonades') pillId = 'pill-lemonades';
+  else if (category === 'Hot Chocolate') pillId = 'pill-hot-chocolate';
+  
+  const activePill = document.getElementById(pillId);
+  if (activePill) activePill.classList.add('active');
+  
+  renderCustomerMenu();
+}
+
+function getCategorySketch(category) {
+  switch (category) {
+    case 'Hot Coffee': return 'assets/images/hot_coffee_sketch.png';
+    case 'Iced Coffee': return 'assets/images/iced_coffee_sketch.png';
+    case 'Matcha': return 'assets/images/matcha_sketch.png';
+    case 'Iced Tea': return 'assets/images/iced_tea_sketch.png';
+    case 'Milkshakes': return 'assets/images/milkshake_sketch.png';
+    case 'Mojitos': return 'assets/images/mojito_sketch.png';
+    case 'Lemonades': return 'assets/images/lemonade_sketch.png';
+    case 'Hot Chocolate': return 'assets/images/hot_chocolate_sketch.png';
+    default: return 'assets/images/menu_header_sketch.png';
+  }
+}
+
+function renderCustomerMenu() {
+  const grid = document.getElementById('customerMenuGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  
+  const searchVal = document.getElementById('cust-menu-search').value.trim().toLowerCase();
+  
+  // Perform search and category filtering
+  const filtered = menuItems.filter(item => {
+    // Filter by Category
+    if (activeCategory !== 'all' && item.category !== activeCategory) return false;
+    
+    // Filter by Search text match
+    if (searchVal) {
+      const matchName = item.name.toLowerCase().includes(searchVal);
+      const matchDesc = (item.description || '').toLowerCase().includes(searchVal);
+      const matchCategory = item.category.toLowerCase().includes(searchVal);
+      if (!matchName && !matchDesc && !matchCategory) return false;
+    }
+    return true;
+  });
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; opacity: 0.5; padding: 3rem 1rem; color: var(--color-cream-dim);">
+        <p>No delicious beverages found matching your search.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  filtered.forEach(item => {
+    const card = document.createElement('div');
+    card.className = `menu-item-card ${!item.isAvailable ? 'sold-out' : ''}`;
+    
+    // Premium gold signature badge highlight tag
+    const sigBadge = item.isSignature ? `<div class="menu-item-sig-badge">✨ Signature</div>` : '';
+    
+    // Elegant sold out overlay
+    const soldOutOverlay = !item.isAvailable ? `<div class="menu-item-soldout-overlay"><span>Sold Out</span></div>` : '';
+    
+    // Get warm charcoal/sepia sketch based on category
+    const sketchPath = getCategorySketch(item.category);
+    
+    // Format price
+    const priceFormatted = typeof item.price === 'number' ? `$${item.price.toFixed(2)}` : `$${item.price}`;
+    
+    card.innerHTML = `
+      <div class="menu-item-img-wrapper" style="background-image: url('${sketchPath}');">
+        ${sigBadge}
+        ${soldOutOverlay}
+      </div>
+      <div class="menu-item-info">
+        <div class="menu-item-header">
+          <h4 class="menu-item-title">${item.name}</h4>
+          <span class="menu-item-price">${priceFormatted}</span>
+        </div>
+        <p class="menu-item-desc">${item.description || 'Crafted with premium ingredients for an exquisite, luxurious taste.'}</p>
+        <div class="menu-item-meta">
+          <span class="menu-item-category-tag">${item.category}</span>
+        </div>
+      </div>
+    `;
+    
+    grid.appendChild(card);
+  });
+}

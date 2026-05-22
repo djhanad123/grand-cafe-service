@@ -34,17 +34,108 @@ const serviceRequestSchema = new mongoose.Schema({
   createdAt: { type: Date, required: true },
   seenAt: { type: Date },
   seenBy: { type: String },
-  completedAt: { type: Date }
+  completedAt: { type: Date },
+  clearedFromBoard: { type: Boolean, default: false } // Soft-clear for live board request visibility
+});
+
+const tableSchema = new mongoose.Schema({
+  number: { type: Number, unique: true, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const menuItemSchema = new mongoose.Schema({
+  name: { type: String, unique: true, required: true },
+  category: { type: String, required: true },
+  description: { type: String },
+  price: { type: Number, required: true },
+  imageUrl: { type: String, required: true },
+  isAvailable: { type: Boolean, default: true },
+  isSignature: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
 });
 
 const Staff = mongoose.model('Staff', staffSchema);
 const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
+const Table = mongoose.model('Table', tableSchema);
+const MenuItem = mongoose.model('MenuItem', menuItemSchema);
+
+// Suggested menu items seed list
+const defaultMenuItems = [
+  // Hot Coffee
+  { name: 'Espresso', category: 'Hot Coffee', description: 'Pure, concentrated coffee with a rich finish.', price: 3.50, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: false },
+  { name: 'Americano', category: 'Hot Coffee', description: 'Bold espresso softened with hot water.', price: 4.00, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: false },
+  { name: 'Cappuccino', category: 'Hot Coffee', description: 'Espresso with steamed milk and a thick milk foam crown.', price: 4.50, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: false },
+  { name: 'Café Latte', category: 'Hot Coffee', description: 'Smooth espresso blended with creamy steamed milk.', price: 4.50, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: false },
+  { name: 'Flat White', category: 'Hot Coffee', description: 'Strong espresso with silky milk and a light texture.', price: 4.75, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: false },
+  { name: 'Cortado', category: 'Hot Coffee', description: 'A balanced espresso cut with just enough warm milk.', price: 4.25, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: false },
+  { name: 'Mocha Latte', category: 'Hot Coffee', description: 'Espresso with chocolate and milk for a smooth, rich taste.', price: 5.00, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: false },
+  { name: 'Spanish Latte', category: 'Hot Coffee', description: 'Espresso sweetened with condensed milk and creamy milk.', price: 5.25, imageUrl: 'assets/images/hot_coffee_sketch.png', isSignature: true },
+  
+  // Iced Coffee
+  { name: 'Iced Latte', category: 'Iced Coffee', description: 'Chilled espresso with cold milk over ice.', price: 4.75, imageUrl: 'assets/images/iced_coffee_sketch.png', isSignature: false },
+  { name: 'Iced Spanish Latte', category: 'Iced Coffee', description: 'Sweet condensed milk, espresso, and cold milk over ice.', price: 5.50, imageUrl: 'assets/images/iced_coffee_sketch.png', isSignature: true },
+  { name: 'Iced Mocha', category: 'Iced Coffee', description: 'Cold espresso with chocolate and milk for a smooth finish.', price: 5.25, imageUrl: 'assets/images/iced_coffee_sketch.png', isSignature: false },
+  { name: 'Iced Americano', category: 'Iced Coffee', description: 'Strong espresso cooled with water and ice.', price: 4.25, imageUrl: 'assets/images/iced_coffee_sketch.png', isSignature: false },
+  
+  // Matcha
+  { name: 'Hot Matcha Latte', category: 'Matcha', description: 'Smooth matcha whisked with steamed milk.', price: 5.00, imageUrl: 'assets/images/matcha_sketch.png', isSignature: false },
+  { name: 'Cold Matcha Latte', category: 'Matcha', description: 'Refreshing matcha with milk served over ice.', price: 5.25, imageUrl: 'assets/images/matcha_sketch.png', isSignature: false },
+  { name: 'Flavored Matcha Latte', category: 'Matcha', description: 'Classic matcha finished with a soft syrup twist.', price: 5.50, imageUrl: 'assets/images/matcha_sketch.png', isSignature: false },
+  
+  // Iced Tea
+  { name: 'Blueberry Iced Tea', category: 'Iced Tea', description: 'Fruity tea with a bright blueberry finish.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Raspberry Iced Tea', category: 'Iced Tea', description: 'Fresh tea with a sweet raspberry touch.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Mango Iced Tea', category: 'Iced Tea', description: 'Tropical mango flavor blended into chilled tea.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Peach Iced Tea', category: 'Iced Tea', description: 'Soft peach sweetness with a refreshing tea base.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Grape Iced Tea', category: 'Iced Tea', description: 'Smooth grape flavor layered into cold tea.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Pineapple Iced Tea', category: 'Iced Tea', description: 'Bright pineapple notes with a refreshing lift.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Strawberry Iced Tea', category: 'Iced Tea', description: 'Sweet strawberry flavor with chilled tea.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Passion Iced Tea', category: 'Iced Tea', description: 'Tropical passion fruit with a crisp tea finish.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  { name: 'Kiwi Iced Tea', category: 'Iced Tea', description: 'Fresh kiwi flavor with a light citrus edge.', price: 4.75, imageUrl: 'assets/images/iced_tea_sketch.png', isSignature: false },
+  
+  // Milkshakes
+  { name: 'Vanilla Shake', category: 'Milkshakes', description: 'Classic creamy vanilla with a smooth texture.', price: 6.00, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: false },
+  { name: 'Strawberry Shake', category: 'Milkshakes', description: 'Sweet strawberry blended into a rich shake.', price: 6.00, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: false },
+  { name: 'Mango Shake', category: 'Milkshakes', description: 'Tropical mango flavor with a creamy finish.', price: 6.00, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: false },
+  { name: 'Banana Shake', category: 'Milkshakes', description: 'Smooth banana blended with vanilla ice cream.', price: 6.00, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: false },
+  { name: 'Blueberry Shake', category: 'Milkshakes', description: 'Rich blueberry flavor with a cool creamy body.', price: 6.25, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: false },
+  { name: 'Chocolate Shake', category: 'Milkshakes', description: 'A thick, classic chocolate milkshake.', price: 6.00, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: false },
+  { name: 'Caramel Shake', category: 'Milkshakes', description: 'Sweet caramel blended into a creamy shake.', price: 6.25, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: false },
+  { name: 'Lotus Shake', category: 'Milkshakes', description: 'Creamy shake with the signature Lotus biscuit flavor.', price: 6.50, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: true },
+  { name: 'Oreo Shake', category: 'Milkshakes', description: 'Rich milkshake blended with crushed Oreo biscuits.', price: 6.50, imageUrl: 'assets/images/milkshake_sketch.png', isSignature: true },
+  
+  // Mojitos
+  { name: 'Strawberry Mojito', category: 'Mojitos', description: 'Fresh mint and strawberry with a sparkling finish.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Blueberry Mojito', category: 'Mojitos', description: 'Blueberry flavor lifted with mint and soda.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Mango Mojito', category: 'Mojitos', description: 'Tropical mango with refreshing mint and fizz.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Kiwi Mojito', category: 'Mojitos', description: 'Bright kiwi flavor with a crisp mint finish.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Passion Mojito', category: 'Mojitos', description: 'Sweet passion fruit with refreshing sparkle.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Raspberry Mojito', category: 'Mojitos', description: 'Fruity raspberry balanced with mint and soda.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Green Apple Mojito', category: 'Mojitos', description: 'Crisp green apple with a fresh citrus lift.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Pineapple Mojito', category: 'Mojitos', description: 'Tropical pineapple with a bright, refreshing edge.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Grape Mojito', category: 'Mojitos', description: 'Sweet grape flavor with a cool fizzy finish.', price: 5.75, imageUrl: 'assets/images/mojito_sketch.png', isSignature: false },
+  { name: 'Indian Ocean Mojito', category: 'Mojitos', description: 'Signature blue curaçao mojito with a tropical feel.', price: 6.25, imageUrl: 'assets/images/mojito_sketch.png', isSignature: true },
+  
+  // Lemonades
+  { name: 'Brazilian Lemonade', category: 'Lemonades', description: 'Creamy lime lemonade with a smooth sweet finish.', price: 5.50, imageUrl: 'assets/images/lemonade_sketch.png', isSignature: true },
+  { name: 'Hibiscus Lemonade', category: 'Lemonades', description: 'Bright hibiscus tea lemonade with a floral touch.', price: 5.50, imageUrl: 'assets/images/lemonade_sketch.png', isSignature: true },
+  
+  // Hot Chocolate
+  { name: 'Classic Hot Chocolate', category: 'Hot Chocolate', description: 'Rich chocolate drink with a smooth, warm body.', price: 4.50, imageUrl: 'assets/images/hot_chocolate_sketch.png', isSignature: false },
+  { name: 'Oreo Hot Chocolate', category: 'Hot Chocolate', description: 'Classic hot chocolate finished with Oreo flavor.', price: 5.00, imageUrl: 'assets/images/hot_chocolate_sketch.png', isSignature: false },
+  { name: 'Caramel Hot Chocolate', category: 'Hot Chocolate', description: 'Warm chocolate with a soft caramel sweetness.', price: 5.00, imageUrl: 'assets/images/hot_chocolate_sketch.png', isSignature: false },
+  { name: 'Hazelnut Hot Chocolate', category: 'Hot Chocolate', description: 'Chocolate blended with a roasted hazelnut note.', price: 5.00, imageUrl: 'assets/images/hot_chocolate_sketch.png', isSignature: false }
+];
 
 // In-memory volatile fallbacks
 let serviceRequests = [];
 let staffRoster = [
   { username: 'Admin', pin: '4450', role: 'admin' }
 ];
+let generatedTables = [
+  { number: 1 }, { number: 2 }, { number: 3 }, { number: 4 }, { number: 5 }
+];
+let menuItems = [...defaultMenuItems]; // Pre-populate in-memory menu fallback with our signature recipes!
 
 let isMongoConnected = false;
 
@@ -70,6 +161,34 @@ async function seedAdminUser() {
   }
 }
 
+// Seed tables helper for MongoDB
+async function seedDefaultTables() {
+  try {
+    const count = await Table.countDocuments();
+    if (count === 0) {
+      const defaultNumbers = [1, 2, 3, 4, 5];
+      const docs = defaultNumbers.map(n => ({ number: n }));
+      await Table.insertMany(docs);
+      console.log('📋 Default Table QR codes (1 to 5) seeded in MongoDB.');
+    }
+  } catch (err) {
+    console.error('Error seeding default tables:', err);
+  }
+}
+
+// Seed menu items helper for MongoDB
+async function seedMenuItems() {
+  try {
+    const count = await MenuItem.countDocuments();
+    if (count === 0) {
+      await MenuItem.insertMany(defaultMenuItems);
+      console.log(`🍵 Default Menu items seeded successfully in MongoDB (Loaded ${defaultMenuItems.length} premium beverages).`);
+    }
+  } catch (err) {
+    console.error('Error seeding default menu items:', err);
+  }
+}
+
 // Database Connection
 const mongoUri = process.env.MONGODB_URI;
 if (mongoUri) {
@@ -79,6 +198,8 @@ if (mongoUri) {
       console.log('✅ Connected to MongoDB Atlas successfully.');
       isMongoConnected = true;
       await seedAdminUser();
+      await seedDefaultTables();
+      await seedMenuItems();
     })
     .catch((err) => {
       console.error('❌ Failed to connect to MongoDB Atlas. Falling back to volatile in-memory storage.', err);
@@ -102,7 +223,8 @@ async function getRequests() {
         createdAt: doc.createdAt.toISOString(),
         seenAt: doc.seenAt ? doc.seenAt.toISOString() : undefined,
         seenBy: doc.seenBy,
-        completedAt: doc.completedAt ? doc.completedAt.toISOString() : undefined
+        completedAt: doc.completedAt ? doc.completedAt.toISOString() : undefined,
+        clearedFromBoard: doc.clearedFromBoard || false
       }));
     } catch (err) {
       console.error('Error fetching requests from MongoDB, using memory fallback:', err);
@@ -127,17 +249,49 @@ async function getStaff() {
   return staffRoster;
 }
 
-// Clean up old completed requests (older than 2 hours) to avoid memory growth
+async function getMenuItems() {
+  if (isDbConnected()) {
+    try {
+      const docs = await MenuItem.find().sort({ createdAt: 1 });
+      return docs.map(doc => ({
+        name: doc.name,
+        category: doc.category,
+        description: doc.description,
+        price: doc.price,
+        imageUrl: doc.imageUrl,
+        isAvailable: doc.isAvailable !== false,
+        isSignature: doc.isSignature === true
+      }));
+    } catch (err) {
+      console.error('Error fetching menu items from MongoDB, using memory fallback:', err);
+    }
+  }
+  return menuItems;
+}
+
+async function getTables() {
+  if (isDbConnected()) {
+    try {
+      const docs = await Table.find().sort({ number: 1 });
+      return docs.map(doc => ({ number: doc.number }));
+    } catch (err) {
+      console.error('Error fetching tables from MongoDB, using memory fallback:', err);
+    }
+  }
+  return generatedTables;
+}
+
+// Clean up old completed requests (older than 24 hours) to avoid memory growth and store history for one day
 setInterval(async () => {
-  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   if (isDbConnected()) {
     try {
       const result = await ServiceRequest.deleteMany({
         status: 'completed',
-        createdAt: { $lt: twoHoursAgo }
+        createdAt: { $lt: twentyFourHoursAgo }
       });
       if (result.deletedCount > 0) {
-        console.log(`Auto-cleaned ${result.deletedCount} old completed requests from MongoDB.`);
+        console.log(`Auto-cleaned ${result.deletedCount} completed requests older than 24 hours from MongoDB.`);
       }
     } catch (err) {
       console.error('Error auto-cleaning completed requests in MongoDB:', err);
@@ -147,7 +301,7 @@ setInterval(async () => {
   // Always clean up in-memory store in case of fallback or switch
   serviceRequests = serviceRequests.filter(req => {
     if (req.status === 'completed') {
-      return new Date(req.createdAt).getTime() > twoHoursAgo.getTime();
+      return new Date(req.createdAt).getTime() > twentyFourHoursAgo.getTime();
     }
     return true;
   });
@@ -156,16 +310,29 @@ setInterval(async () => {
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
+  // Send menu list on connection so customer and staff both get it instantly
+  (async () => {
+    try {
+      const menu = await getMenuItems();
+      socket.emit('menu:list', menu);
+    } catch(e) {
+      console.error('Error emitting menu on connection:', e);
+    }
+  })();
+
   // When a dashboard connects, immediately send all active requests
   socket.on('dashboard:init', async () => {
     socket.join('dashboard-room');
     const reqs = await getRequests();
     const staff = await getStaff();
+    const tables = await getTables();
+    const menu = await getMenuItems();
     socket.emit('request:list', reqs);
     socket.emit('staff:list', staff);
-    console.log(`Dashboard joined room and received request list: ${reqs.length} requests`);
+    socket.emit('table:list', tables);
+    socket.emit('menu:list', menu);
+    console.log(`Dashboard joined room: requests=${reqs.length}, staff=${staff.length}, tables=${tables.length}, menu=${menu.length}`);
   });
-
   // When a customer makes a service request
   socket.on('request:create', async (data) => {
     const { table, type } = data;
@@ -331,22 +498,28 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Admin capability: clear all completed requests from the active dashboard
+  // Admin capability: clear all completed requests from the active dashboard (soft-clear)
   socket.on('request:clear_completed', async () => {
     let clearedCount = 0;
     if (isDbConnected()) {
       try {
-        const result = await ServiceRequest.deleteMany({ status: 'completed' });
-        clearedCount = result.deletedCount;
-        console.log(`Cleared ${clearedCount} completed requests from MongoDB.`);
+        const result = await ServiceRequest.updateMany(
+          { status: 'completed', clearedFromBoard: false },
+          { $set: { clearedFromBoard: true } }
+        );
+        clearedCount = result.modifiedCount;
+        console.log(`Soft-cleared ${clearedCount} completed requests in MongoDB.`);
       } catch (err) {
-        console.error('Error clearing completed requests from MongoDB:', err);
+        console.error('Error soft-clearing completed requests from MongoDB:', err);
       }
     } else {
-      const originalCount = serviceRequests.length;
-      serviceRequests = serviceRequests.filter(req => req.status !== 'completed');
-      clearedCount = originalCount - serviceRequests.length;
-      console.log(`Cleared ${clearedCount} completed requests from Memory.`);
+      serviceRequests.forEach(req => {
+        if (req.status === 'completed') {
+          req.clearedFromBoard = true;
+          clearedCount++;
+        }
+      });
+      console.log(`Soft-cleared ${clearedCount} completed requests in Memory.`);
     }
 
     const currentRequests = await getRequests();
@@ -438,6 +611,145 @@ io.on('connection', (socket) => {
     const currentStaff = await getStaff();
     // Broadcast refreshed list to all dashboards
     io.to('dashboard-room').emit('staff:list', currentStaff);
+  });
+
+  // Admin capability: create/add new table QR codes
+  socket.on('table:create', async (data) => {
+    const { start, end } = data;
+    if (start === undefined) return;
+    
+    const startNum = parseInt(start);
+    const endNum = end !== undefined ? parseInt(end) : startNum;
+    
+    if (isNaN(startNum) || startNum < 1 || endNum < startNum) {
+      socket.emit('table:error', { message: 'Invalid table range.' });
+      return;
+    }
+    
+    const numbersToAdd = [];
+    for (let n = startNum; n <= endNum; n++) {
+      numbersToAdd.push(n);
+    }
+    
+    if (isDbConnected()) {
+      try {
+        const existingDocs = await Table.find({ number: { $in: numbersToAdd } });
+        const existingNums = new Set(existingDocs.map(d => d.number));
+        
+        const newDocs = numbersToAdd
+          .filter(n => !existingNums.has(n))
+          .map(n => ({ number: n }));
+          
+        if (newDocs.length > 0) {
+          await Table.insertMany(newDocs);
+          console.log(`Added ${newDocs.length} new tables to MongoDB:`, newDocs.map(d => d.number));
+        }
+      } catch (err) {
+        console.error('Error saving tables to MongoDB:', err);
+      }
+    } else {
+      // Memory fallback
+      numbersToAdd.forEach(n => {
+        if (!generatedTables.some(t => t.number === n)) {
+          generatedTables.push({ number: n });
+        }
+      });
+      generatedTables.sort((a, b) => a.number - b.number);
+      console.log(`Added tables to Memory:`, numbersToAdd);
+    }
+    
+    const currentTables = await getTables();
+    io.to('dashboard-room').emit('table:list', currentTables);
+  });
+
+  // Admin capability: delete a table QR code
+  socket.on('table:delete', async (number) => {
+    const tableNum = parseInt(number);
+    if (isNaN(tableNum)) return;
+    
+    if (isDbConnected()) {
+      try {
+        const res = await Table.deleteOne({ number: tableNum });
+        console.log(`Deleted table ${tableNum} from MongoDB: deletedCount=${res.deletedCount}`);
+      } catch (err) {
+        console.error('Error deleting table from MongoDB:', err);
+      }
+    } else {
+      generatedTables = generatedTables.filter(t => t.number !== tableNum);
+      console.log(`Deleted table ${tableNum} from Memory`);
+    }
+    
+    const currentTables = await getTables();
+    io.to('dashboard-room').emit('table:list', currentTables);
+  });
+
+  // Admin capability: create/add new menu items
+  socket.on('menu:create', async (newItem) => {
+    let savedItem = null;
+    if (isDbConnected()) {
+      try {
+        const itemDoc = new MenuItem(newItem);
+        const saved = await itemDoc.save();
+        savedItem = saved;
+      } catch (err) {
+        console.error('Error saving menu item to MongoDB:', err);
+      }
+    }
+    
+    if (!savedItem) {
+      savedItem = { ...newItem, createdAt: new Date() };
+      menuItems.push(savedItem);
+    }
+    
+    const refreshedMenu = await getMenuItems();
+    io.emit('menu:list', refreshedMenu);
+    console.log(`Menu item created: ${newItem.name}`);
+  });
+
+  // Admin capability: update a menu item
+  socket.on('menu:update', async (updatedItem) => {
+    let savedItem = null;
+    if (isDbConnected()) {
+      try {
+        const doc = await MenuItem.findOneAndUpdate(
+          { name: updatedItem.name },
+          { $set: updatedItem },
+          { new: true }
+        );
+        savedItem = doc;
+      } catch (err) {
+        console.error('Error updating menu item in MongoDB:', err);
+      }
+    }
+    
+    if (!savedItem) {
+      const idx = menuItems.findIndex(i => i.name === updatedItem.name);
+      if (idx !== -1) {
+        menuItems[idx] = { ...menuItems[idx], ...updatedItem };
+        savedItem = menuItems[idx];
+      }
+    }
+    
+    const refreshedMenu = await getMenuItems();
+    io.emit('menu:list', refreshedMenu);
+    console.log(`Menu item updated: ${updatedItem.name}`);
+  });
+
+  // Admin capability: delete a menu item
+  socket.on('menu:delete', async (name) => {
+    if (isDbConnected()) {
+      try {
+        await MenuItem.deleteOne({ name: name });
+      } catch (err) {
+        console.error('Error deleting menu item in MongoDB:', err);
+      }
+    } else {
+      menuItems = menuItems.filter(i => i.name !== name);
+    }
+    
+    const refreshedMenu = await getMenuItems();
+    io.emit('menu:list', refreshedMenu);
+    console.log(`Menu item deleted: ${name}`);
   });
 
   socket.on('disconnect', () => {

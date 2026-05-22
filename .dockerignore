@@ -1,0 +1,13 @@
+# Exclude local dependency builds
+node_modules
+npm-debug.log
+
+# Exclude git references
+.git
+.gitignore
+
+# Exclude local workspace cache folders
+.gemini
+artifacts
+scratch
+*.md

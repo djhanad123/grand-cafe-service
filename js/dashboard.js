@@ -7,6 +7,7 @@
 
 // 1. Core State variables
 let requests = [];
+let generatedTables = [];
 let socket = null;
 let broadcastChannel = null;
 let isMuted = false;
@@ -19,6 +20,11 @@ let loggedInRole = null;
 let activeStaffRoster = [];
 let activeKeypadUser = null;
 let typedPIN = '';
+
+// Menu State Variables
+let activeMenuItems = [];
+let menuCategoryFilter = 'all';
+let editingItemName = null;
 
 // 2. Staff Database Seeding
 function seedStaffDatabase() {
@@ -270,12 +276,19 @@ function setupStaffUI() {
   if (loggedInRole === 'admin') {
     renderStaffRoster();
   }
+
+  // Instantly re-render lists for the new staff role workload
+  renderBoard();
+  recalculateStats();
+  renderHistory();
 }
 
 function applyRoleGates() {
   const tabUsers = document.getElementById('tab-users');
   const tabQr = document.getElementById('tab-qr');
   const clearCompletedBtn = document.querySelector('.clear-completed-btn');
+  const menuForm = document.getElementById('menuFormCard');
+  const adminOnlyHeaders = document.querySelectorAll('.admin-only-header');
   
   if (loggedInRole === 'admin') {
     if (tabUsers) tabUsers.style.display = 'flex';
@@ -284,6 +297,8 @@ function applyRoleGates() {
       clearCompletedBtn.style.display = 'flex';
       clearCompletedBtn.disabled = false;
     }
+    if (menuForm) menuForm.style.display = 'block';
+    adminOnlyHeaders.forEach(el => el.style.display = '');
   } else if (loggedInRole === 'cashier') {
     if (tabUsers) tabUsers.style.display = 'none';
     if (tabQr) tabQr.style.display = 'flex';
@@ -291,6 +306,8 @@ function applyRoleGates() {
       clearCompletedBtn.style.display = 'flex';
       clearCompletedBtn.disabled = false;
     }
+    if (menuForm) menuForm.style.display = 'block';
+    adminOnlyHeaders.forEach(el => el.style.display = '');
     if (document.getElementById('pane-users') && document.getElementById('pane-users').classList.contains('active')) {
       switchTab('requests');
     }
@@ -301,6 +318,8 @@ function applyRoleGates() {
     if (clearCompletedBtn) {
       clearCompletedBtn.style.display = 'none';
     }
+    if (menuForm) menuForm.style.display = 'none';
+    adminOnlyHeaders.forEach(el => el.style.display = 'none');
     if (document.getElementById('pane-users') && document.getElementById('pane-users').classList.contains('active')) {
       switchTab('requests');
     }
@@ -308,6 +327,9 @@ function applyRoleGates() {
       switchTab('requests');
     }
   }
+  
+  // Re-render menu to apply new role constraints (interactive toggles vs plain text)
+  renderMenuManager();
 }
 
 function handleStaffLogout() {
@@ -326,14 +348,19 @@ function switchTab(tabName) {
   document.getElementById(`tab-${tabName}`).classList.add('active');
   document.getElementById(`pane-${tabName}`).classList.add('active');
 
+  if (tabName === 'history') {
+    renderHistory();
+  }
+
   if (tabName === 'qr') {
     // Populate base URL automatically if blank
     const baseUrlInput = document.getElementById('qr-base-url');
-    if (!baseUrlInput.value) {
+    if (baseUrlInput && !baseUrlInput.value) {
       // Get current folder URL minus the filename
       const currentPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
       baseUrlInput.value = currentPath;
     }
+    renderQRGallery();
   }
 }
 
@@ -419,12 +446,16 @@ function initNetwork() {
       socket = io();
       console.log('Dashboard connected to server socket.');
 
-      socket.emit('dashboard:init');
+      socket.on('connect', () => {
+        console.log('Dashboard socket connected successfully. Registering with backend...');
+        socket.emit('dashboard:init');
+      });
 
       socket.on('request:list', (data) => {
         requests = data;
         renderBoard();
         recalculateStats();
+        renderHistory();
       });
 
       socket.on('request:new', (newReq) => {
@@ -433,6 +464,7 @@ function initNetwork() {
           playNotificationChime();
           renderBoard();
           recalculateStats();
+          renderHistory();
         }
       });
 
@@ -442,6 +474,7 @@ function initNetwork() {
           requests[idx] = updatedReq;
           renderBoard();
           recalculateStats();
+          renderHistory();
         }
       });
 
@@ -461,6 +494,27 @@ function initNetwork() {
 
       socket.on('staff:error', (err) => {
         alert(`Staff Error: ${err.message}`);
+      });
+
+      socket.on('table:list', (data) => {
+        console.log('Received synced tables list from server:', data);
+        generatedTables = data;
+        
+        // Cache table lists locally
+        localStorage.setItem('grand_cafe_generated_tables', JSON.stringify(generatedTables));
+        renderQRGallery();
+      });
+
+      socket.on('table:error', (err) => {
+        alert(`Table Error: ${err.message}`);
+      });
+
+      // Listen for menu items updates
+      socket.on('menu:list', (data) => {
+        console.log('Received synced menu list from server:', data);
+        activeMenuItems = data;
+        localStorage.setItem('grand_cafe_menu_items', JSON.stringify(activeMenuItems));
+        renderMenuManager();
       });
 
     } catch (e) {
@@ -500,10 +554,18 @@ function initBroadcastFallback() {
   }
 
   loadFromLocalDB();
+  loadTablesFromLocal();
+  loadMenuFromLocal();
 
   window.addEventListener('storage', (event) => {
     if (!event.key || event.key === 'grand_cafe_requests') {
       loadFromLocalDB();
+    }
+    if (!event.key || event.key === 'grand_cafe_generated_tables') {
+      loadTablesFromLocal();
+    }
+    if (!event.key || event.key === 'grand_cafe_menu_items') {
+      loadMenuFromLocal();
     }
     if (!event.key || event.key === 'grand_cafe_staff_users') {
       try {
@@ -535,6 +597,18 @@ function loadFromLocalDB() {
     recalculateStats();
   } catch (e) {
     console.error('Failed to parse requests from local storage.', e);
+  }
+}
+
+function loadTablesFromLocal() {
+  try {
+    const raw = localStorage.getItem('grand_cafe_generated_tables');
+    generatedTables = raw ? JSON.parse(raw) : [
+      { number: 1 }, { number: 2 }, { number: 3 }, { number: 4 }, { number: 5 }
+    ];
+    renderQRGallery();
+  } catch (e) {
+    console.error('Failed to parse tables from storage', e);
   }
 }
 
@@ -655,6 +729,9 @@ function renderBoard() {
 
   // Filter requests
   const filteredRequests = requests.filter(req => {
+    // Hide soft-cleared completed requests from the active workboard columns
+    if (req.status === 'completed' && req.clearedFromBoard) return false;
+
     // Apply category filter (All / Waiter Calls / Water / Bills)
     if (currentFilter !== 'all' && req.type !== currentFilter) return false;
     
@@ -831,30 +908,28 @@ setInterval(() => {
 }, 10000);
 
 // 9. Printable QR Cards Generation Station Engine
-function generateQRTableCards() {
+function renderQRGallery() {
   const baseUrl = document.getElementById('qr-base-url').value.trim();
-  const startNum = parseInt(document.getElementById('qr-start-table').value);
-  const endNum = parseInt(document.getElementById('qr-end-table').value);
-  
   const container = document.getElementById('qrCardsContainer');
+  if (!container) return;
   container.innerHTML = ''; 
 
-  if (isNaN(startNum) || isNaN(endNum) || startNum < 1 || endNum < startNum) {
+  if (generatedTables.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; color: var(--color-alert); padding: 2rem;">
-        <p>Invalid Table range. Please make sure the Start and End bounds are valid numbers.</p>
+      <div style="grid-column: 1 / -1; text-align: center; opacity: 0.5; padding: 3rem;">
+        <p>No table QR codes generated yet. Enter a range above and click Generate to save them.</p>
       </div>
     `;
     return;
   }
 
-  for (let table = startNum; table <= endNum; table++) {
+  generatedTables.forEach(t => {
     let customerUrl = '';
     if (baseUrl) {
-      customerUrl = `${baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'}customer.html?table=${table}`;
+      customerUrl = `${baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'}customer.html?table=${t.number}`;
     } else {
       const currentPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-      customerUrl = `${currentPath}customer.html?table=${table}`;
+      customerUrl = `${currentPath}customer.html?table=${t.number}`;
     }
 
     const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(customerUrl)}&color=1a100a&margin=10`;
@@ -867,15 +942,251 @@ function generateQRTableCards() {
       <div class="qr-card-subtitle">Tableside Service</div>
       
       <div class="qr-code-box">
-        <img src="${qrImgSrc}" alt="Table ${table} QR Code" loading="lazy">
+        <img src="${qrImgSrc}" alt="Table ${t.number} QR Code" loading="lazy">
       </div>
       
-      <div class="qr-card-table-num">TABLE ${table}</div>
+      <div class="qr-card-table-num">TABLE ${t.number}</div>
       <div class="qr-card-instruction">Scan with your phone's camera to call a waiter, get water, or ask for the bill instantly.</div>
+      
+      <div class="qr-card-actions no-print" style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center; width: 100%;">
+        <button class="btn-card-action btn-seen-action" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px;" onclick="printSingleQRCard(${t.number}, '${qrImgSrc}')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print
+        </button>
+        <button class="btn-card-action btn-delete-user" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px;" onclick="deleteTableQR(${t.number})">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete
+        </button>
+      </div>
     `;
 
     container.appendChild(card);
+  });
+}
+
+function addTableQR() {
+  const startNum = parseInt(document.getElementById('qr-start-table').value);
+  const endNum = parseInt(document.getElementById('qr-end-table').value);
+  
+  if (isNaN(startNum) || isNaN(endNum) || startNum < 1 || endNum < startNum) {
+    alert('Invalid table range. Please enter valid start and end numbers.');
+    return;
   }
+  
+  if (socket && socket.connected) {
+    socket.emit('table:create', { start: startNum, end: endNum });
+  } else {
+    // Fallback mode: add to generatedTables in-memory & save
+    for (let n = startNum; n <= endNum; n++) {
+      if (!generatedTables.some(t => t.number === n)) {
+        generatedTables.push({ number: n });
+      }
+    }
+    generatedTables.sort((a, b) => a.number - b.number);
+    localStorage.setItem('grand_cafe_generated_tables', JSON.stringify(generatedTables));
+    renderQRGallery();
+  }
+}
+
+function deleteTableQR(number) {
+  const confirmDelete = confirm(`Are you sure you want to delete Table ${number} QR code?`);
+  if (!confirmDelete) return;
+  
+  if (socket && socket.connected) {
+    socket.emit('table:delete', number);
+  } else {
+    generatedTables = generatedTables.filter(t => t.number !== number);
+    localStorage.setItem('grand_cafe_generated_tables', JSON.stringify(generatedTables));
+    renderQRGallery();
+  }
+}
+
+function printSingleQRCard(tableNumber, qrSrc) {
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
+  if (!printWindow) {
+    alert('Popup blocker is preventing printing. Please allow popups for this site.');
+    return;
+  }
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Print Table ${tableNumber} QR Code</title>
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+      <style>
+        @media print {
+          body {
+            background: #ffffff !important;
+            color: #22170f !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+        body {
+          font-family: 'Outfit', sans-serif;
+          background: #fbf5e6;
+          color: #22170f;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+          padding: 0;
+        }
+        .qr-card {
+          width: 380px;
+          border: 2px solid #c5a059;
+          background: #ffffff;
+          border-radius: 24px;
+          padding: 2.5rem 2rem;
+          text-align: center;
+          box-shadow: 0 10px 30px rgba(34, 23, 15, 0.15);
+          box-sizing: border-box;
+        }
+        .qr-logo {
+          max-width: 140px;
+          height: auto;
+          margin-bottom: 0.5rem;
+        }
+        .qr-title {
+          font-family: 'Cinzel', serif;
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: #362517;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.25rem;
+        }
+        .qr-subtitle {
+          font-size: 0.85rem;
+          text-transform: uppercase;
+          color: #c5a059;
+          font-weight: 600;
+          letter-spacing: 0.15em;
+          margin-bottom: 1.5rem;
+        }
+        .qr-code-box {
+          background: #fbf5e6;
+          border: 1px solid rgba(197, 160, 89, 0.2);
+          padding: 1.5rem;
+          border-radius: 16px;
+          display: inline-block;
+          margin-bottom: 1.5rem;
+        }
+        .qr-code-box img {
+          width: 200px;
+          height: 200px;
+          display: block;
+        }
+        .qr-table-num {
+          font-family: 'Cinzel', serif;
+          font-size: 1.6rem;
+          color: #362517;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          margin-bottom: 0.5rem;
+        }
+        .qr-instruction {
+          font-size: 0.8rem;
+          color: #4c321f;
+          line-height: 1.5;
+          font-weight: 300;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="qr-card">
+        <img src="grand-logo.png" alt="Grand Café Logo" class="qr-logo" onerror="this.src='https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=150&q=80';">
+        <div class="qr-title">Grand Café</div>
+        <div class="qr-subtitle">Tableside Service</div>
+        <div class="qr-code-box">
+          <img src="${qrSrc}" alt="Table ${tableNumber} QR Code">
+        </div>
+        <div class="qr-table-num">TABLE ${tableNumber}</div>
+        <div class="qr-instruction">Scan with your phone's camera to call a waiter, get water, or ask for the bill instantly.</div>
+      </div>
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+            window.close();
+          }, 500);
+        };
+      </script>
+    </body>
+    </html>
+  `;
+  
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+function renderHistory() {
+  const historyBody = document.getElementById('historyTableBody');
+  const totalCountEl = document.getElementById('history-total-count');
+  if (!historyBody) return;
+  
+  // Filter for completed requests only
+  const completedRequests = requests.filter(req => req.status === 'completed');
+  
+  // Filter by role visibility
+  const visibleHistory = completedRequests.filter(req => {
+    if (loggedInRole === 'waiter') {
+      return req.seenBy === loggedInStaff;
+    }
+    return true; // Admin/Cashier can see all
+  });
+  
+  if (totalCountEl) {
+    totalCountEl.innerText = visibleHistory.length;
+  }
+  
+  if (visibleHistory.length === 0) {
+    historyBody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 3rem; opacity: 0.5;">
+          <p>No completed serving history recorded for today.</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  // Sort by completedAt descending
+  const sortedHistory = [...visibleHistory].sort((a, b) => new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt));
+  
+  historyBody.innerHTML = '';
+  sortedHistory.forEach(req => {
+    const tr = document.createElement('tr');
+    
+    const created = new Date(req.createdAt);
+    const completed = req.completedAt ? new Date(req.completedAt) : null;
+    
+    const createdTimeStr = created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const completedTimeStr = completed ? completed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A';
+    
+    // Response Duration calculation
+    let durationStr = 'N/A';
+    if (completed) {
+      const diffMs = completed.getTime() - created.getTime();
+      const diffSec = Math.max(0, Math.floor(diffMs / 1000));
+      if (diffSec < 60) {
+        durationStr = `${diffSec}s`;
+      } else {
+        const diffMin = Math.floor(diffSec / 60);
+        const remainingSec = diffSec % 60;
+        durationStr = `${diffMin}m ${remainingSec}s`;
+      }
+    }
+    
+    tr.innerHTML = `
+      <td style="font-weight: 600; color: var(--color-gold);">Table ${req.table}</td>
+      <td><span class="request-badge ${getRequestBadgeClass(req.type)}" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: inline-flex; border-radius: 4px;">${getRequestIcon(req.type)} ${getRequestLabel(req.type)}</span></td>
+      <td style="font-weight: 500;">👤 ${req.seenBy || 'System'}</td>
+      <td style="color: var(--color-cream-dim);">${createdTimeStr}</td>
+      <td style="color: var(--color-cream-dim);">${completedTimeStr}</td>
+      <td style="font-family: monospace; font-weight: bold; color: var(--color-success);">${durationStr}</td>
+    `;
+    historyBody.appendChild(tr);
+  });
 }
 
 // 9.5 User Management Operations (Admin Panel)
@@ -992,4 +1303,346 @@ function deleteStaffUser(username) {
 window.addEventListener('DOMContentLoaded', () => {
   checkStaffSession();
   initNetwork();
+  
+  if (!socket || !socket.connected) {
+    loadMenuFromLocal();
+  }
 });
+
+// ==========================================================================
+// STAFF PORTAL DIGITAL MENU OPERATIONS ENGINE
+// ==========================================================================
+
+function loadMenuFromLocal() {
+  try {
+    const raw = localStorage.getItem('grand_cafe_menu_items');
+    activeMenuItems = raw ? JSON.parse(raw) : [];
+    renderMenuManager();
+  } catch (e) {
+    console.error('Failed to parse menu items from storage:', e);
+  }
+}
+
+function renderMenuManager() {
+  const tbody = document.getElementById('menuRosterBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  
+  const searchVal = document.getElementById('menu-search-input').value.trim().toLowerCase();
+  
+  const filtered = activeMenuItems.filter(item => {
+    if (menuCategoryFilter !== 'all' && item.category !== menuCategoryFilter) return false;
+    if (searchVal) {
+      const matchName = item.name.toLowerCase().includes(searchVal);
+      const matchDesc = (item.description || '').toLowerCase().includes(searchVal);
+      const matchCategory = item.category.toLowerCase().includes(searchVal);
+      if (!matchName && !matchDesc && !matchCategory) return false;
+    }
+    return true;
+  });
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 3rem; opacity: 0.5;">
+          <p>No matching menu items found.</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  const isAuthorized = (loggedInRole === 'admin' || loggedInRole === 'cashier');
+  
+  filtered.forEach(item => {
+    const tr = document.createElement('tr');
+    
+    // Price formatting
+    const priceFormatted = typeof item.price === 'number' ? `$${item.price.toFixed(2)}` : `$${item.price}`;
+    
+    // Signature Switch or Badge
+    let sigCell = '';
+    if (isAuthorized) {
+      sigCell = `
+        <label class="switch" style="width: 40px; height: 20px; display: block; margin: 0 auto;">
+          <input type="checkbox" ${item.isSignature ? 'checked' : ''} onchange="toggleMenuItemSignature('${item.name.replace(/'/g, "\\'")}', this.checked)" style="opacity: 0; width: 0; height: 0;">
+          <span class="slider" style="background-color: ${item.isSignature ? 'var(--color-gold)' : 'rgba(255,255,255,0.1)'}; border: 1px solid rgba(197, 160, 89, 0.3);"></span>
+        </label>
+      `;
+    } else {
+      sigCell = item.isSignature ? '<span style="color: var(--color-gold);">✨ Yes</span>' : 'No';
+    }
+    
+    // Availability Switch or Badge
+    let availCell = '';
+    if (isAuthorized) {
+      availCell = `
+        <label class="switch" style="width: 40px; height: 20px; display: block; margin: 0 auto;">
+          <input type="checkbox" ${item.isAvailable ? 'checked' : ''} onchange="toggleMenuItemAvailability('${item.name.replace(/'/g, "\\'")}', this.checked)" style="opacity: 0; width: 0; height: 0;">
+          <span class="slider" style="background-color: ${item.isAvailable ? 'var(--color-success)' : 'rgba(255,255,255,0.1)'}; border: 1px solid rgba(46, 204, 113, 0.3);"></span>
+        </label>
+      `;
+    } else {
+      availCell = item.isAvailable ? '<span style="color: var(--color-success);">✅ Available</span>' : '<span style="color: var(--color-alert);">❌ Sold Out</span>';
+    }
+    
+    // Actions cell
+    let actionCell = '';
+    if (isAuthorized) {
+      actionCell = `
+        <td style="text-align: right;" class="admin-only-header">
+          <button class="btn-card-action btn-seen-action" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin: 0 0.25rem 0 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px;" onclick="editMenuItem('${item.name.replace(/'/g, "\\'")}')">
+            Edit
+          </button>
+          <button class="btn-delete-user" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px;" onclick="deleteMenuItem('${item.name.replace(/'/g, "\\'")}')">
+            Delete
+          </button>
+        </td>
+      `;
+    }
+    
+    tr.innerHTML = `
+      <td style="font-weight: 600; color: var(--color-cream);">${item.name}</td>
+      <td style="color: var(--color-cream-dim);">${item.category}</td>
+      <td style="font-family: monospace; font-weight: bold; color: var(--color-gold);">${priceFormatted}</td>
+      <td style="text-align: center;">${sigCell}</td>
+      <td style="text-align: center;">${availCell}</td>
+      ${actionCell}
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterManagerByCategory(category) {
+  menuCategoryFilter = category;
+  
+  // Clear active button filter class
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    if (btn.id.startsWith('btn-mcat-')) {
+      btn.classList.remove('active');
+    }
+  });
+  
+  // Set targeted active filter
+  let btnId = 'btn-mcat-all';
+  if (category === 'Hot Coffee') btnId = 'btn-mcat-hotcoffee';
+  else if (category === 'Iced Coffee') btnId = 'btn-mcat-icedcoffee';
+  else if (category === 'Matcha') btnId = 'btn-mcat-matcha';
+  else if (category === 'Iced Tea') btnId = 'btn-mcat-icedtea';
+  else if (category === 'Milkshakes') btnId = 'btn-mcat-milkshakes';
+  else if (category === 'Mojitos') btnId = 'btn-mcat-mojitos';
+  else if (category === 'Lemonades') btnId = 'btn-mcat-lemonades';
+  else if (category === 'Hot Chocolate') btnId = 'btn-mcat-hotchocolate';
+  
+  const activeBtn = document.getElementById(btnId);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  renderMenuManager();
+}
+
+function filterManagerMenuTable() {
+  renderMenuManager();
+}
+
+function resetMenuForm() {
+  editingItemName = null;
+  document.getElementById('new-menu-form').reset();
+  
+  const submitText = document.getElementById('menu-submit-text');
+  if (submitText) submitText.innerText = 'Add to Menu';
+  
+  const cancelBtn = document.getElementById('btn-menu-cancel');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  
+  const nameInput = document.getElementById('menu-item-name');
+  if (nameInput) nameInput.disabled = false;
+}
+
+function editMenuItem(name) {
+  const item = activeMenuItems.find(i => i.name === name);
+  if (!item) return;
+  
+  editingItemName = item.name;
+  
+  const nameInput = document.getElementById('menu-item-name');
+  if (nameInput) {
+    nameInput.value = item.name;
+    nameInput.disabled = true; // Disable key name changes to maintain persistence
+  }
+  
+  const categoryInput = document.getElementById('menu-item-category');
+  if (categoryInput) categoryInput.value = item.category;
+  
+  const descriptionInput = document.getElementById('menu-item-description');
+  if (descriptionInput) descriptionInput.value = item.description || '';
+  
+  const priceInput = document.getElementById('menu-item-price');
+  if (priceInput) priceInput.value = item.price;
+  
+  const sigInput = document.getElementById('menu-item-signature');
+  if (sigInput) sigInput.checked = !!item.isSignature;
+  
+  const submitText = document.getElementById('menu-submit-text');
+  if (submitText) submitText.innerText = 'Save Changes';
+  
+  const cancelBtn = document.getElementById('btn-menu-cancel');
+  if (cancelBtn) cancelBtn.style.display = 'flex';
+  
+  // Scroll form into view
+  const menuForm = document.getElementById('menuFormCard');
+  if (menuForm) menuForm.scrollIntoView({ behavior: 'smooth' });
+}
+
+function saveMenuItem() {
+  const nameInput = document.getElementById('menu-item-name');
+  const categoryInput = document.getElementById('menu-item-category');
+  const descriptionInput = document.getElementById('menu-item-description');
+  const priceInput = document.getElementById('menu-item-price');
+  const sigInput = document.getElementById('menu-item-signature');
+  
+  if (!nameInput || !categoryInput || !priceInput) return;
+  
+  const name = nameInput.value.trim();
+  const category = categoryInput.value;
+  const description = descriptionInput ? descriptionInput.value.trim() : '';
+  const price = parseFloat(priceInput.value);
+  const isSignature = sigInput ? sigInput.checked : false;
+  
+  if (!name || isNaN(price)) {
+    alert('Please enter a valid name and price.');
+    return;
+  }
+  
+  const isEdit = !!editingItemName;
+  const menuItemPayload = {
+    name: name,
+    category: category,
+    description: description,
+    price: price,
+    isSignature: isSignature,
+    isAvailable: true // Defaults to true on new item creation
+  };
+  
+  if (isEdit) {
+    // Keep availability of editing item
+    const existing = activeMenuItems.find(i => i.name === editingItemName);
+    if (existing) {
+      menuItemPayload.isAvailable = existing.isAvailable;
+    }
+  }
+  
+  if (socket && socket.connected) {
+    if (isEdit) {
+      socket.emit('menu:update', menuItemPayload);
+    } else {
+      socket.emit('menu:create', menuItemPayload);
+    }
+    resetMenuForm();
+    playNotificationChime();
+    return;
+  }
+  
+  // Offline fallback logic
+  if (isEdit) {
+    const idx = activeMenuItems.findIndex(i => i.name === editingItemName);
+    if (idx !== -1) {
+      activeMenuItems[idx] = { ...activeMenuItems[idx], ...menuItemPayload };
+    }
+  } else {
+    // Check duplication on offline fallback
+    const isDuplicate = activeMenuItems.some(i => i.name.toLowerCase() === name.toLowerCase());
+    if (isDuplicate) {
+      alert('A menu item with this name already exists.');
+      return;
+    }
+    activeMenuItems.push(menuItemPayload);
+  }
+  
+  localStorage.setItem('grand_cafe_menu_items', JSON.stringify(activeMenuItems));
+  
+  // Broadcast changes offline
+  if (broadcastChannel) {
+    broadcastChannel.postMessage({
+      event: 'menu:updated',
+      data: activeMenuItems
+    });
+  }
+  
+  window.dispatchEvent(new Event('storage'));
+  
+  resetMenuForm();
+  renderMenuManager();
+  playNotificationChime();
+}
+
+function deleteMenuItem(name) {
+  const confirmDelete = confirm(`Are you sure you want to delete "${name}" from the menu?`);
+  if (!confirmDelete) return;
+  
+  if (socket && socket.connected) {
+    socket.emit('menu:delete', name);
+    playFailureBuzz();
+    return;
+  }
+  
+  // Offline fallback
+  activeMenuItems = activeMenuItems.filter(i => i.name !== name);
+  localStorage.setItem('grand_cafe_menu_items', JSON.stringify(activeMenuItems));
+  
+  if (broadcastChannel) {
+    broadcastChannel.postMessage({
+      event: 'menu:updated',
+      data: activeMenuItems
+    });
+  }
+  window.dispatchEvent(new Event('storage'));
+  
+  renderMenuManager();
+  playFailureBuzz();
+}
+
+function toggleMenuItemSignature(name, isSignature) {
+  const item = activeMenuItems.find(i => i.name === name);
+  if (!item) return;
+  
+  item.isSignature = isSignature;
+  
+  if (socket && socket.connected) {
+    socket.emit('menu:update', { name: name, isSignature: isSignature });
+    return;
+  }
+  
+  // Offline fallback
+  localStorage.setItem('grand_cafe_menu_items', JSON.stringify(activeMenuItems));
+  if (broadcastChannel) {
+    broadcastChannel.postMessage({
+      event: 'menu:updated',
+      data: activeMenuItems
+    });
+  }
+  window.dispatchEvent(new Event('storage'));
+  renderMenuManager();
+}
+
+function toggleMenuItemAvailability(name, isAvailable) {
+  const item = activeMenuItems.find(i => i.name === name);
+  if (!item) return;
+  
+  item.isAvailable = isAvailable;
+  
+  if (socket && socket.connected) {
+    socket.emit('menu:update', { name: name, isAvailable: isAvailable });
+    return;
+  }
+  
+  // Offline fallback
+  localStorage.setItem('grand_cafe_menu_items', JSON.stringify(activeMenuItems));
+  if (broadcastChannel) {
+    broadcastChannel.postMessage({
+      event: 'menu:updated',
+      data: activeMenuItems
+    });
+  }
+  window.dispatchEvent(new Event('storage'));
+  renderMenuManager();
+}

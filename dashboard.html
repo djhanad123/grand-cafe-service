@@ -97,8 +97,16 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><rect x="3" y="3" width="9" height="9"/><rect x="12" y="12" width="9" height="9"/><rect x="3" y="12" width="9" height="9"/><rect x="12" y="3" width="9" height="9"/></svg>
           QR Station
         </button>
+        <button class="nav-tab" id="tab-menu" onclick="switchTab('menu')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+          Menu Management
+        </button>
+        <button class="nav-tab" id="tab-history" onclick="switchTab('history')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+          Serving History
+        </button>
         <button class="nav-tab" id="tab-users" onclick="switchTab('users')" style="display: none;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           User Management
         </button>
       </nav>
@@ -247,9 +255,9 @@
                 </div>
               </div>
               
-              <button class="btn-generate-qr" onclick="generateQRTableCards()">
+              <button class="btn-generate-qr" onclick="addTableQR()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Generate QR Cards
+                Generate & Save QR Codes
               </button>
             </div>
 
@@ -266,12 +274,157 @@
               <!-- Cards dynamic printing viewport -->
               <div class="qr-cards-grid" id="qrCardsContainer">
                 <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; opacity: 0.5;">
-                  <p>Click "Generate QR Cards" on the left to create card previews.</p>
+                  <p>Loading generated table QR codes...</p>
                 </div>
               </div>
             </div>
 
           </div>
+        </section>
+      </div>
+
+      <!-- PANE: SERVING HISTORY (Daily Log) -->
+      <div class="dashboard-pane" id="pane-history">
+        <section class="roster-card" style="margin-top: 0; width: 100%;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 style="margin-bottom: 0.25rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+                Serving History Log
+              </h2>
+              <p style="margin-bottom: 0; font-size: 0.85rem; color: var(--color-cream-dim);">Daily completed service requests. Records are automatically cleared after 24 hours.</p>
+            </div>
+            <div class="table-badge" id="historyCounterBadge" style="margin-bottom: 0;">
+              Total Completed: <span id="history-total-count" style="color: var(--color-gold); font-weight: bold; margin-left: 0.25rem;">0</span>
+            </div>
+          </div>
+          
+          <div class="roster-table-container">
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Table</th>
+                  <th>Service Requested</th>
+                  <th>Assigned Waiter</th>
+                  <th>Created At</th>
+                  <th>Completed At</th>
+                  <th>Response Duration</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 3rem; opacity: 0.5;">
+                    <p>No completed serving history recorded for today.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- PANE: MENU MANAGEMENT -->
+      <div class="dashboard-pane" id="pane-menu">
+        <section class="user-management-grid">
+          
+          <!-- Menu Add Form (Admin/Cashier only) -->
+          <div class="user-form-card" id="menuFormCard">
+            <div>
+              <h3>Add Menu Item</h3>
+              <p style="margin-bottom: 0; font-size: 0.85rem; color: var(--color-cream-dim);">Create or update a beverage/dish recipe.</p>
+            </div>
+            
+            <form id="new-menu-form" onsubmit="event.preventDefault(); saveMenuItem();">
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="menu-item-name">Item Name</label>
+                <input type="text" id="menu-item-name" class="form-input" placeholder="e.g. Spanish Latte" required>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="menu-item-category">Category</label>
+                <select id="menu-item-category" class="form-input" required style="background: rgba(20, 13, 8, 0.7); cursor: pointer; color: var(--color-cream);">
+                  <option value="Hot Coffee">Hot Coffee</option>
+                  <option value="Iced Coffee">Iced Coffee</option>
+                  <option value="Matcha">Matcha</option>
+                  <option value="Iced Tea">Iced Tea</option>
+                  <option value="Milkshakes">Milkshakes</option>
+                  <option value="Mojitos">Mojitos</option>
+                  <option value="Lemonades">Lemonades</option>
+                  <option value="Hot Chocolate">Hot Chocolate</option>
+                </select>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="menu-item-description">Description</label>
+                <textarea id="menu-item-description" class="form-input" style="height: 60px; resize: none; background: rgba(20, 13, 8, 0.7); color: var(--color-cream); font-family: inherit; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 6px; padding: 0.5rem;" placeholder="e.g. Espresso sweetened with condensed milk and creamy steamed milk."></textarea>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="menu-item-price">Price ($)</label>
+                <input type="number" id="menu-item-price" class="form-input" step="0.01" min="0.00" placeholder="e.g. 5.25" required>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; background: rgba(20, 13, 8, 0.4); padding: 0.5rem; border-radius: 6px;">
+                <input type="checkbox" id="menu-item-signature" style="cursor: pointer; width: 18px; height: 18px; accent-color: var(--color-gold);">
+                <label for="menu-item-signature" style="cursor: pointer; margin-bottom: 0; user-select: none;">Mark as Signature Highlight</label>
+              </div>
+              
+              <button type="submit" class="btn-generate-qr" style="margin-top: 0;" id="btn-menu-submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span id="menu-submit-text">Add to Menu</span>
+              </button>
+              <button type="button" class="clear-completed-btn" style="margin-top: 0.5rem; width: 100%; display: none; justify-content: center;" id="btn-menu-cancel" onclick="resetMenuForm()">
+                Cancel Edit
+              </button>
+            </form>
+          </div>
+          
+          <!-- Menu List Table -->
+          <div class="roster-card" id="menuListCard">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+              <h3 style="margin-bottom: 0;">Beverage & Food Menu</h3>
+              
+              <!-- Search bar in table -->
+              <input type="text" id="menu-search-input" class="form-input" style="width: 200px; padding: 0.4rem; font-size: 0.8rem; margin: 0; background: rgba(20, 13, 8, 0.6);" placeholder="Search menu..." oninput="filterManagerMenuTable()">
+            </div>
+
+            <!-- Categories filter shortcuts -->
+            <div class="filter-group" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.35rem;">
+              <button class="filter-btn active" id="btn-mcat-all" onclick="filterManagerByCategory('all')">All</button>
+              <button class="filter-btn" id="btn-mcat-hotcoffee" onclick="filterManagerByCategory('Hot Coffee')">Hot Coffee</button>
+              <button class="filter-btn" id="btn-mcat-icedcoffee" onclick="filterManagerByCategory('Iced Coffee')">Iced Coffee</button>
+              <button class="filter-btn" id="btn-mcat-matcha" onclick="filterManagerByCategory('Matcha')">Matcha</button>
+              <button class="filter-btn" id="btn-mcat-icedtea" onclick="filterManagerByCategory('Iced Tea')">Iced Tea</button>
+              <button class="filter-btn" id="btn-mcat-milkshakes" onclick="filterManagerByCategory('Milkshakes')">Milkshakes</button>
+              <button class="filter-btn" id="btn-mcat-mojitos" onclick="filterManagerByCategory('Mojitos')">Mojitos</button>
+              <button class="filter-btn" id="btn-mcat-lemonades" onclick="filterManagerByCategory('Lemonades')">Lemonades</button>
+              <button class="filter-btn" id="btn-mcat-hotchocolate" onclick="filterManagerByCategory('Hot Chocolate')">Cocoa</button>
+            </div>
+
+            <div class="roster-table-container" style="max-height: 480px; overflow-y: auto;">
+              <table class="roster-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th style="text-align: center;">Signature</th>
+                    <th style="text-align: center;">Available</th>
+                    <th style="text-align: right;" class="admin-only-header">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="menuRosterBody">
+                  <!-- Rendered dynamically -->
+                  <tr>
+                    <td colspan="6" style="text-align: center; padding: 3rem; opacity: 0.5;">
+                      <p>Loading menu items...</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
         </section>
       </div>
 
