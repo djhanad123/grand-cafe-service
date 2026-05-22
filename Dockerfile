@@ -17,6 +17,7 @@ COPY dashboard.html ./
 COPY grand-logo.png ./
 COPY css/ ./css/
 COPY js/ ./js/
+COPY assets/ ./assets/
 
 # Force production node environment
 ENV NODE_ENV=production

@@ -1378,12 +1378,12 @@ function renderMenuManager() {
     if (isAuthorized) {
       availCell = `
         <label class="switch" style="width: 40px; height: 20px; display: block; margin: 0 auto;">
-          <input type="checkbox" ${item.isAvailable ? 'checked' : ''} onchange="toggleMenuItemAvailability('${item.name.replace(/'/g, "\\'")}', this.checked)" style="opacity: 0; width: 0; height: 0;">
-          <span class="slider" style="background-color: ${item.isAvailable ? 'var(--color-success)' : 'rgba(255,255,255,0.1)'}; border: 1px solid rgba(46, 204, 113, 0.3);"></span>
+          <input type="checkbox" ${item.isAvailable !== false ? 'checked' : ''} onchange="toggleMenuItemAvailability('${item.name.replace(/'/g, "\\'")}', this.checked)" style="opacity: 0; width: 0; height: 0;">
+          <span class="slider" style="background-color: ${item.isAvailable !== false ? 'var(--color-success)' : 'rgba(255,255,255,0.1)'}; border: 1px solid rgba(46, 204, 113, 0.3);"></span>
         </label>
       `;
     } else {
-      availCell = item.isAvailable ? '<span style="color: var(--color-success);">✅ Available</span>' : '<span style="color: var(--color-alert);">❌ Sold Out</span>';
+      availCell = item.isAvailable !== false ? '<span style="color: var(--color-success);">✅ Available</span>' : '<span style="color: var(--color-alert);">❌ Sold Out</span>';
     }
     
     // Actions cell

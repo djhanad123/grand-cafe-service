@@ -542,13 +542,13 @@ function renderCustomerMenu() {
   
   filtered.forEach(item => {
     const card = document.createElement('div');
-    card.className = `menu-item-card ${!item.isAvailable ? 'sold-out' : ''}`;
+    card.className = `menu-item-card ${item.isAvailable === false ? 'sold-out' : ''}`;
     
     // Premium gold signature badge highlight tag
     const sigBadge = item.isSignature ? `<div class="menu-item-sig-badge">✨ Signature</div>` : '';
     
     // Elegant sold out overlay
-    const soldOutOverlay = !item.isAvailable ? `<div class="menu-item-soldout-overlay"><span>Sold Out</span></div>` : '';
+    const soldOutOverlay = item.isAvailable === false ? `<div class="menu-item-soldout-overlay"><span>Sold Out</span></div>` : '';
     
     // Get warm charcoal/sepia sketch based on category
     const sketchPath = getCategorySketch(item.category);
