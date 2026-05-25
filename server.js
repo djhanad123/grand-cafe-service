@@ -240,8 +240,9 @@ async function seedMenuItems() {
 
 // Database Connection Options with strict timeouts
 const mongooseOptions = {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5s if blocked by Atlas firewall
+  serverSelectionTimeoutMS: 15000, // Timeout after 15s to be safe
   socketTimeoutMS: 45000,
+  family: 4, // Force IPv4 to bypass the Node.js 18+ DNS SRV resolution issue with MongoDB Atlas
 };
 
 const mongoUri = process.env.MONGODB_URI;
