@@ -1,7 +1,37 @@
+const fs = require('fs');
+const path = require('path');
+
+// Zero-dependency local .env file loader for seamless multi-computer setup
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, 'utf8');
+    envConfig.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+      
+      const matched = trimmed.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (matched) {
+        const key = matched[1];
+        let value = matched[2] || '';
+        // Strip quotes if present
+        if (value.length > 0 && value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+          value = value.substring(1, value.length - 1);
+        } else if (value.length > 0 && value.charAt(0) === "'" && value.charAt(value.length - 1) === "'") {
+          value = value.substring(1, value.length - 1);
+        }
+        process.env[key] = value.trim();
+      }
+    });
+    console.log('✅ Local .env configuration loaded successfully.');
+  }
+} catch (e) {
+  console.warn('⚠️ Warning: Failed to parse local .env file:', e.message);
+}
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = require('path');
 const mongoose = require('mongoose');
 
 const app = express();
