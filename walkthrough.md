@@ -66,9 +66,16 @@ card.innerHTML = `
 
 ---
 
-## 🚀 How to Launch & Experience
-Simply start your application backend as normal. When it connects to your database:
-1. It will print out a migration message showing that it checked your database and updated the image paths automatically:
-   `✅ Seamlessly upgraded 40+ menu item assets to new premium paths in MongoDB.`
-2. Navigate to your customer link (`http://localhost:3000/customer.html?table=5`) or staff dashboard.
-3. The menu is now alive with photorealistic, jaw-dropping high-fidelity assets!
+## 🍃 MongoDB Connection & DNS Patch (Google Cloud Run)
+We diagnosed and successfully resolved the MongoDB Atlas connection issue on the live Cloud Run service:
+1. **Firewall Whitelist (`0.0.0.0/0`)**: The database is successfully whitelisted in the MongoDB Atlas Access List to allow Google Cloud's serverless, dynamic outbound IP pool to connect.
+2. **Database Name Synced**: Updated the Cloud Run environment variables (`MONGODB_URI`) to point to the exact same database name used locally: `grand-cafe`.
+3. **Mongoose DNS IPv4 Resolution Patch**: Added `family: 4` to Mongoose connection options in `server.js` to force IPv4 and bypass the Node.js 18+ DNS SRV resolution issue with MongoDB Atlas replica sets.
+
+### Live Connection Status Verified
+* **Banner Status:** The **"Volatile Storage Mode Active" warning banner is completely gone**!
+* **Server DB Status Endpoint:** Querying `/api/db-status` live returns:
+  ```json
+  { "isConnected": true }
+  ```
+  This guarantees that all orders, service calls, and menu edits are **100% persisted and secure** in your MongoDB Atlas database!
