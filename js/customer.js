@@ -446,6 +446,15 @@ function loadMenuFromLocal() {
   try {
     const raw = localStorage.getItem('grand_cafe_menu_items');
     menuItems = raw ? JSON.parse(raw) : [];
+    
+    // Check if the cache contains outdated sketch placeholder assets
+    const hasSketches = menuItems.some(item => item.imageUrl && item.imageUrl.includes('_sketch.png'));
+    if (hasSketches) {
+      console.log('🧹 Outdated sketch assets found in cached menu items. Clearing localStorage cache...');
+      localStorage.removeItem('grand_cafe_menu_items');
+      menuItems = [];
+    }
+    
     renderCustomerMenu();
   } catch (e) {
     console.error('Failed to parse menu items from storage:', e);
@@ -499,61 +508,61 @@ const categoryDetails = {
   'all': {
     title: '✨ Premium Selection',
     desc: 'Indulge in our curated selection of hot and cold beverages, crafted by artisan baristas for a luxurious café experience.',
-    sketch: 'assets/images/menu_header_sketch.png'
+    sketch: 'assets/images/hot_coffee_premium.png'
   },
   'Hot Coffee': {
     title: '☕ Hot Coffee',
     desc: 'Bold, rich, and aromatic espresso recipes balanced perfectly with textured milk for a velvety finish.',
-    sketch: 'assets/images/hot_coffee_sketch.png'
+    sketch: 'assets/images/hot_coffee_premium.png'
   },
   'Iced Coffee': {
     title: '🧊 Chilled Coffee',
     desc: 'Sweet, smooth, and refreshing espresso infusions poured cold over ice for a sophisticated cool-down.',
-    sketch: 'assets/images/iced_coffee_sketch.png'
+    sketch: 'assets/images/iced_coffee_premium.png'
   },
   'Matcha': {
     title: '🍵 Whisked Matcha',
     desc: 'Shade-grown, organic Japanese green tea, stone-ground and whisked with velvety steamed or iced milk.',
-    sketch: 'assets/images/matcha_sketch.png'
+    sketch: 'assets/images/matcha_premium.png'
   },
   'Iced Tea': {
     title: '🍹 Infused Iced Tea',
     desc: 'Artisanal loose-leaf teas cold-brewed and shaken with fresh citrus, sweet herbs, and ice for maximum energy.',
-    sketch: 'assets/images/iced_tea_sketch.png'
+    sketch: 'assets/images/iced_tea_premium.png'
   },
   'Milkshakes': {
     title: '🥤 Dessert Shakes',
     desc: 'Decadent, creamy milkshakes blended with house-made syrups, topped with fresh whipped cream and a cherry.',
-    sketch: 'assets/images/milkshake_sketch.png'
+    sketch: 'assets/images/milkshake_premium.png'
   },
   'Mojitos': {
     title: '🌱 Sparkling Mojitos',
     desc: 'Refreshing tall coolers crafted with muddled fresh garden mint, tart lime wedges, and sparkling sodas.',
-    sketch: 'assets/images/mojito_sketch.png'
+    sketch: 'assets/images/mojito_premium.png'
   },
   'Lemonades': {
     title: '🍋 Crafted Lemonades',
     desc: 'Zesty, fresh-squeezed citrus concoctions and special cream combinations blended ice-cold for absolute purity.',
-    sketch: 'assets/images/lemonade_sketch.png'
+    sketch: 'assets/images/brazilian_lemonade.png'
   },
   'Hot Chocolate': {
     title: '🍫 Steaming Cocoa',
     desc: 'Gourmet melted Belgian chocolates blended into warm, creamy milk, topped with toasted mini marshmallows.',
-    sketch: 'assets/images/hot_chocolate_sketch.png'
+    sketch: 'assets/images/hot_chocolate_premium.png'
   }
 };
 
 function getCategorySketch(category) {
   switch (category) {
-    case 'Hot Coffee': return 'assets/images/hot_coffee_sketch.png';
-    case 'Iced Coffee': return 'assets/images/iced_coffee_sketch.png';
-    case 'Matcha': return 'assets/images/matcha_sketch.png';
-    case 'Iced Tea': return 'assets/images/iced_tea_sketch.png';
-    case 'Milkshakes': return 'assets/images/milkshake_sketch.png';
-    case 'Mojitos': return 'assets/images/mojito_sketch.png';
-    case 'Lemonades': return 'assets/images/lemonade_sketch.png';
-    case 'Hot Chocolate': return 'assets/images/hot_chocolate_sketch.png';
-    default: return 'assets/images/menu_header_sketch.png';
+    case 'Hot Coffee': return 'assets/images/hot_coffee_premium.png';
+    case 'Iced Coffee': return 'assets/images/iced_coffee_premium.png';
+    case 'Matcha': return 'assets/images/matcha_premium.png';
+    case 'Iced Tea': return 'assets/images/iced_tea_premium.png';
+    case 'Milkshakes': return 'assets/images/milkshake_premium.png';
+    case 'Mojitos': return 'assets/images/mojito_premium.png';
+    case 'Lemonades': return 'assets/images/brazilian_lemonade.png';
+    case 'Hot Chocolate': return 'assets/images/hot_chocolate_premium.png';
+    default: return 'assets/images/hot_coffee_premium.png';
   }
 }
 
@@ -619,7 +628,7 @@ function renderCustomerMenu() {
     const priceFormatted = typeof item.price === 'number' ? `$${item.price.toFixed(2)}` : `$${item.price}`;
     
     card.innerHTML = `
-      <div class="menu-item-img-wrapper" style="background-image: url('${sketchPath}');">
+      <div class="menu-item-img-wrapper" style="background-image: url('${item.imageUrl || sketchPath}');">
         ${sigBadge}
         ${soldOutOverlay}
       </div>
