@@ -60,6 +60,27 @@ We also captured a full browser walk-through showing live scrolling, card hover/
 
 ---
 
+## 🚀 Future Vision: Authentic Product Photography Upgrades
+
+While the color-shifted images look premium and visually clean, we aligned 100% with the user on creating **100% authentic, dedicated AI-generated product photography** for the following 10 drinks. The prompts are optimized to use **realistic organic colors** and feature your customized saucer cookie design:
+
+| Drink Name | Filename | Styling & Prompt Blueprint |
+| :--- | :--- | :--- |
+| **Flat White** | `flat_white.png` | Minimalist white ceramic cup, showcasing silky microfoam with a delicate tulip latte art design on top. Plain solid neutral light-grey studio background. Warm studio lighting, realistic organic colors. |
+| **Cortado** | `cortado.png` | Small, clean double-walled glass cup, displaying equal parts rich dark espresso and creamy steamed milk, topped with a thin crema ring. Solid light-grey background, realistic organic colors. |
+| **Iced Mocha** | `iced_mocha.png` | Tall glass with marbled chocolate syrup, espresso, and cold milk over glistening square ice cubes, finished with cocoa powder on top. Solid light-grey background, realistic organic colors. |
+| **Iced Americano** | `iced_americano.png` | Modern glass containing translucent, deep amber-brown espresso poured over glistening clear ice cubes. Crema bubbles on top, solid light-grey background, realistic organic colors. |
+| **Hot Matcha Latte** | `hot_matcha_latte.png` | Clean ceramic cup featuring a vibrant ceremonial jade-green matcha color topped with silky white microfoam latte art. Solid light-grey background, realistic organic colors. |
+| **Cold Matcha Latte** | `cold_matcha_latte.png` | Tall glass displaying a gorgeous layered gradient: rich green matcha top layer slowly blending into creamy white milk and ice cubes. Solid light-grey background, realistic organic colors. |
+| **Flavored Matcha** | `flavored_matcha_latte.png` | Modern glass cup with a pastel-green matcha color topped with a creamy vanilla foam crown, dusted with fine matcha powder. Solid light-grey background, realistic organic colors. |
+| **Classic Hot Choc** | `classic_hot_chocolate.png` | Cozy, rounded dark ceramic mug showing thick milk chocolate cocoa topped with a glossy froth swirl and cocoa powder dusting. Solid light-grey background, realistic organic colors. |
+| **Oreo Hot Choc** | `oreo_hot_chocolate.png` | Clear glass mug with rich dark cocoa topped with fluffy whipped cream and cookie crumbs, featuring a **whole real chocolate sandwich cookie resting on the side saucer**. Solid light-grey background, realistic organic colors. |
+| **Hazelnut Hot Choc** | `hazelnut_hot_chocolate.png` | Elegant ceramic mug displaying smooth chocolate cocoa with a warm hazelnut-gold undertone, finished with a chocolate drizzle on the froth. Solid light-grey background, realistic organic colors. |
+
+The verified JSON configuration is securely saved at `scratch/authentic_images_config.json`. When the model quota resets, these prompts will be executed sequentially to seamlessly upgrade the menu.
+
+---
+
 ## 🛠️ Codebase Modifications
 
 ### 1. Markup Restructure ([customer.html](file:///c:/Users/dj-ha/Documents/grand-cafe-service/customer.html))
