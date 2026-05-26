@@ -2426,14 +2426,7 @@ p {
 .menu-items-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
-  .menu-items-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-  }
+  gap: 1.25rem;
 }
 
 @media (max-width: 480px) {
@@ -2452,12 +2445,19 @@ p {
   box-shadow: var(--shadow-glass);
   display: flex;
   flex-direction: column;
-  transition: transform var(--transition-normal), border-color var(--transition-normal);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.3s ease, 
+              box-shadow 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
-.menu-item-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(197, 160, 89, 0.35);
+.menu-item-card:hover,
+.menu-item-card.expanded {
+  transform: scale(1.25) !important;
+  z-index: 50;
+  border-color: rgba(197, 160, 89, 0.65);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(197, 160, 89, 0.35);
 }
 
 .menu-item-img-wrapper {
@@ -2550,10 +2550,7 @@ p {
   color: var(--color-cream);
   font-family: var(--font-body);
   line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: block; /* Allow long drink names (e.g. Spanish Latte, Indian Ocean Mojito) to wrap naturally instead of truncating */
 }
 
 .menu-item-price {
