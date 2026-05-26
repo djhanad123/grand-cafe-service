@@ -102,58 +102,58 @@ const SystemSettings = mongoose.model('SystemSettings', systemSettingsSchema);
 // Suggested menu items seed list
 const defaultMenuItems = [
   // Hot Coffee
-  { name: 'Espresso', category: 'Hot Coffee', description: 'Pure, concentrated coffee with a rich finish.', price: 3.50, imageUrl: 'assets/images/hot_coffee_premium.png', isSignature: false },
-  { name: 'Americano', category: 'Hot Coffee', description: 'Bold espresso softened with hot water.', price: 4.00, imageUrl: 'assets/images/hot_coffee_premium.png', isSignature: false },
-  { name: 'Cappuccino', category: 'Hot Coffee', description: 'Espresso with steamed milk and a thick milk foam crown.', price: 4.50, imageUrl: 'assets/images/hot_coffee_premium.png', isSignature: false },
-  { name: 'Café Latte', category: 'Hot Coffee', description: 'Smooth espresso blended with creamy steamed milk.', price: 4.50, imageUrl: 'assets/images/hot_coffee_premium.png', isSignature: false },
-  { name: 'Flat White', category: 'Hot Coffee', description: 'Strong espresso with silky milk and a light texture.', price: 4.75, imageUrl: 'assets/images/hot_coffee_premium.png', isSignature: false },
-  { name: 'Cortado', category: 'Hot Coffee', description: 'A balanced espresso cut with just enough warm milk.', price: 4.25, imageUrl: 'assets/images/hot_coffee_premium.png', isSignature: false },
-  { name: 'Mocha Latte', category: 'Hot Coffee', description: 'Espresso with chocolate and milk for a smooth, rich taste.', price: 5.00, imageUrl: 'assets/images/hot_coffee_premium.png', isSignature: false },
+  { name: 'Espresso', category: 'Hot Coffee', description: 'Pure, concentrated coffee with a rich finish.', price: 3.50, imageUrl: 'assets/images/espresso.png', isSignature: false },
+  { name: 'Americano', category: 'Hot Coffee', description: 'Bold espresso softened with hot water.', price: 4.00, imageUrl: 'assets/images/americano.png', isSignature: false },
+  { name: 'Cappuccino', category: 'Hot Coffee', description: 'Espresso with steamed milk and a thick milk foam crown.', price: 4.50, imageUrl: 'assets/images/cappuccino.png', isSignature: false },
+  { name: 'Café Latte', category: 'Hot Coffee', description: 'Smooth espresso blended with creamy steamed milk.', price: 4.50, imageUrl: 'assets/images/cafe_latte.png', isSignature: false },
+  { name: 'Flat White', category: 'Hot Coffee', description: 'Strong espresso with silky milk and a light texture.', price: 4.75, imageUrl: 'assets/images/flat_white.png', isSignature: false },
+  { name: 'Cortado', category: 'Hot Coffee', description: 'A balanced espresso cut with just enough warm milk.', price: 4.25, imageUrl: 'assets/images/cortado.png', isSignature: false },
+  { name: 'Mocha Latte', category: 'Hot Coffee', description: 'Espresso with chocolate and milk for a smooth, rich taste.', price: 5.00, imageUrl: 'assets/images/mocha_latte.png', isSignature: false },
   { name: 'Spanish Latte', category: 'Hot Coffee', description: 'Espresso sweetened with condensed milk and creamy milk.', price: 5.25, imageUrl: 'assets/images/spanish_latte.png', isSignature: true },
   
   // Iced Coffee
-  { name: 'Iced Latte', category: 'Iced Coffee', description: 'Chilled espresso with cold milk over ice.', price: 4.75, imageUrl: 'assets/images/iced_coffee_premium.png', isSignature: false },
+  { name: 'Iced Latte', category: 'Iced Coffee', description: 'Chilled espresso with cold milk over ice.', price: 4.75, imageUrl: 'assets/images/iced_latte.png', isSignature: false },
   { name: 'Iced Spanish Latte', category: 'Iced Coffee', description: 'Sweet condensed milk, espresso, and cold milk over ice.', price: 5.50, imageUrl: 'assets/images/iced_spanish_latte.png', isSignature: true },
-  { name: 'Iced Mocha', category: 'Iced Coffee', description: 'Cold espresso with chocolate and milk for a smooth finish.', price: 5.25, imageUrl: 'assets/images/iced_coffee_premium.png', isSignature: false },
-  { name: 'Iced Americano', category: 'Iced Coffee', description: 'Strong espresso cooled with water and ice.', price: 4.25, imageUrl: 'assets/images/iced_coffee_premium.png', isSignature: false },
+  { name: 'Iced Mocha', category: 'Iced Coffee', description: 'Cold espresso with chocolate and milk for a smooth finish.', price: 5.25, imageUrl: 'assets/images/iced_mocha.png', isSignature: false },
+  { name: 'Iced Americano', category: 'Iced Coffee', description: 'Strong espresso cooled with water and ice.', price: 4.25, imageUrl: 'assets/images/iced_americano.png', isSignature: false },
   
   // Matcha
-  { name: 'Hot Matcha Latte', category: 'Matcha', description: 'Smooth matcha whisked with steamed milk.', price: 5.00, imageUrl: 'assets/images/matcha_premium.png', isSignature: false },
-  { name: 'Cold Matcha Latte', category: 'Matcha', description: 'Refreshing matcha with milk served over ice.', price: 5.25, imageUrl: 'assets/images/matcha_premium.png', isSignature: false },
-  { name: 'Flavored Matcha Latte', category: 'Matcha', description: 'Classic matcha finished with a soft syrup twist.', price: 5.50, imageUrl: 'assets/images/matcha_premium.png', isSignature: false },
+  { name: 'Hot Matcha Latte', category: 'Matcha', description: 'Smooth matcha whisked with steamed milk.', price: 5.00, imageUrl: 'assets/images/hot_matcha_latte.png', isSignature: false },
+  { name: 'Cold Matcha Latte', category: 'Matcha', description: 'Refreshing matcha with milk served over ice.', price: 5.25, imageUrl: 'assets/images/cold_matcha_latte.png', isSignature: false },
+  { name: 'Flavored Matcha Latte', category: 'Matcha', description: 'Classic matcha finished with a soft syrup twist.', price: 5.50, imageUrl: 'assets/images/flavored_matcha_latte.png', isSignature: false },
   
   // Iced Tea
-  { name: 'Blueberry Iced Tea', category: 'Iced Tea', description: 'Fruity tea with a bright blueberry finish.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Raspberry Iced Tea', category: 'Iced Tea', description: 'Fresh tea with a sweet raspberry touch.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Mango Iced Tea', category: 'Iced Tea', description: 'Tropical mango flavor blended into chilled tea.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Peach Iced Tea', category: 'Iced Tea', description: 'Soft peach sweetness with a refreshing tea base.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Grape Iced Tea', category: 'Iced Tea', description: 'Smooth grape flavor layered into cold tea.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Pineapple Iced Tea', category: 'Iced Tea', description: 'Bright pineapple notes with a refreshing lift.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Strawberry Iced Tea', category: 'Iced Tea', description: 'Sweet strawberry flavor with chilled tea.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Passion Iced Tea', category: 'Iced Tea', description: 'Tropical passion fruit with a crisp tea finish.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
-  { name: 'Kiwi Iced Tea', category: 'Iced Tea', description: 'Fresh kiwi flavor with a light citrus edge.', price: 4.75, imageUrl: 'assets/images/iced_tea_premium.png', isSignature: false },
+  { name: 'Blueberry Iced Tea', category: 'Iced Tea', description: 'Fruity tea with a bright blueberry finish.', price: 4.75, imageUrl: 'assets/images/blueberry_iced_tea.png', isSignature: false },
+  { name: 'Raspberry Iced Tea', category: 'Iced Tea', description: 'Fresh tea with a sweet raspberry touch.', price: 4.75, imageUrl: 'assets/images/raspberry_iced_tea.png', isSignature: false },
+  { name: 'Mango Iced Tea', category: 'Iced Tea', description: 'Tropical mango flavor blended into chilled tea.', price: 4.75, imageUrl: 'assets/images/mango_iced_tea.png', isSignature: false },
+  { name: 'Peach Iced Tea', category: 'Iced Tea', description: 'Soft peach sweetness with a refreshing tea base.', price: 4.75, imageUrl: 'assets/images/peach_iced_tea.png', isSignature: false },
+  { name: 'Grape Iced Tea', category: 'Iced Tea', description: 'Smooth grape flavor layered into cold tea.', price: 4.75, imageUrl: 'assets/images/grape_iced_tea.png', isSignature: false },
+  { name: 'Pineapple Iced Tea', category: 'Iced Tea', description: 'Bright pineapple notes with a refreshing lift.', price: 4.75, imageUrl: 'assets/images/pineapple_iced_tea.png', isSignature: false },
+  { name: 'Strawberry Iced Tea', category: 'Iced Tea', description: 'Sweet strawberry flavor with chilled tea.', price: 4.75, imageUrl: 'assets/images/strawberry_iced_tea.png', isSignature: false },
+  { name: 'Passion Iced Tea', category: 'Iced Tea', description: 'Tropical passion fruit with a crisp tea finish.', price: 4.75, imageUrl: 'assets/images/passion_iced_tea.png', isSignature: false },
+  { name: 'Kiwi Iced Tea', category: 'Iced Tea', description: 'Fresh kiwi flavor with a light citrus edge.', price: 4.75, imageUrl: 'assets/images/kiwi_iced_tea.png', isSignature: false },
   
   // Milkshakes
-  { name: 'Vanilla Shake', category: 'Milkshakes', description: 'Classic creamy vanilla with a smooth texture.', price: 6.00, imageUrl: 'assets/images/milkshake_premium.png', isSignature: false },
-  { name: 'Strawberry Shake', category: 'Milkshakes', description: 'Sweet strawberry blended into a rich shake.', price: 6.00, imageUrl: 'assets/images/milkshake_premium.png', isSignature: false },
-  { name: 'Mango Shake', category: 'Milkshakes', description: 'Tropical mango flavor with a creamy finish.', price: 6.00, imageUrl: 'assets/images/milkshake_premium.png', isSignature: false },
-  { name: 'Banana Shake', category: 'Milkshakes', description: 'Smooth banana blended with vanilla ice cream.', price: 6.00, imageUrl: 'assets/images/milkshake_premium.png', isSignature: false },
-  { name: 'Blueberry Shake', category: 'Milkshakes', description: 'Rich blueberry flavor with a cool creamy body.', price: 6.25, imageUrl: 'assets/images/milkshake_premium.png', isSignature: false },
-  { name: 'Chocolate Shake', category: 'Milkshakes', description: 'A thick, classic chocolate milkshake.', price: 6.00, imageUrl: 'assets/images/milkshake_premium.png', isSignature: false },
-  { name: 'Caramel Shake', category: 'Milkshakes', description: 'Sweet caramel blended into a creamy shake.', price: 6.25, imageUrl: 'assets/images/milkshake_premium.png', isSignature: false },
+  { name: 'Vanilla Shake', category: 'Milkshakes', description: 'Classic creamy vanilla with a smooth texture.', price: 6.00, imageUrl: 'assets/images/vanilla_shake.png', isSignature: false },
+  { name: 'Strawberry Shake', category: 'Milkshakes', description: 'Sweet strawberry blended into a rich shake.', price: 6.00, imageUrl: 'assets/images/strawberry_shake.png', isSignature: false },
+  { name: 'Mango Shake', category: 'Milkshakes', description: 'Tropical mango flavor with a creamy finish.', price: 6.00, imageUrl: 'assets/images/mango_shake.png', isSignature: false },
+  { name: 'Banana Shake', category: 'Milkshakes', description: 'Smooth banana blended with vanilla ice cream.', price: 6.00, imageUrl: 'assets/images/banana_shake.png', isSignature: false },
+  { name: 'Blueberry Shake', category: 'Milkshakes', description: 'Rich blueberry flavor with a cool creamy body.', price: 6.25, imageUrl: 'assets/images/blueberry_shake.png', isSignature: false },
+  { name: 'Chocolate Shake', category: 'Milkshakes', description: 'A thick, classic chocolate milkshake.', price: 6.00, imageUrl: 'assets/images/chocolate_shake.png', isSignature: false },
+  { name: 'Caramel Shake', category: 'Milkshakes', description: 'Sweet caramel blended into a creamy shake.', price: 6.25, imageUrl: 'assets/images/caramel_shake.png', isSignature: false },
   { name: 'Lotus Shake', category: 'Milkshakes', description: 'Creamy shake with the signature Lotus biscuit flavor.', price: 6.50, imageUrl: 'assets/images/lotus_shake.png', isSignature: true },
   { name: 'Oreo Shake', category: 'Milkshakes', description: 'Rich milkshake blended with crushed Oreo biscuits.', price: 6.50, imageUrl: 'assets/images/oreo_shake.png', isSignature: true },
   
   // Mojitos
-  { name: 'Strawberry Mojito', category: 'Mojitos', description: 'Fresh mint and strawberry with a sparkling finish.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Blueberry Mojito', category: 'Mojitos', description: 'Blueberry flavor lifted with mint and soda.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Mango Mojito', category: 'Mojitos', description: 'Tropical mango with refreshing mint and fizz.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Kiwi Mojito', category: 'Mojitos', description: 'Bright kiwi flavor with a crisp mint finish.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Passion Mojito', category: 'Mojitos', description: 'Sweet passion fruit with refreshing sparkle.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Raspberry Mojito', category: 'Mojitos', description: 'Fruity raspberry balanced with mint and soda.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Green Apple Mojito', category: 'Mojitos', description: 'Crisp green apple with a fresh citrus lift.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Pineapple Mojito', category: 'Mojitos', description: 'Tropical pineapple with a bright, refreshing edge.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
-  { name: 'Grape Mojito', category: 'Mojitos', description: 'Sweet grape flavor with a cool fizzy finish.', price: 5.75, imageUrl: 'assets/images/mojito_premium.png', isSignature: false },
+  { name: 'Strawberry Mojito', category: 'Mojitos', description: 'Fresh mint and strawberry with a sparkling finish.', price: 5.75, imageUrl: 'assets/images/strawberry_mojito.png', isSignature: false },
+  { name: 'Blueberry Mojito', category: 'Mojitos', description: 'Blueberry flavor lifted with mint and soda.', price: 5.75, imageUrl: 'assets/images/blueberry_mojito.png', isSignature: false },
+  { name: 'Mango Mojito', category: 'Mojitos', description: 'Tropical mango with refreshing mint and fizz.', price: 5.75, imageUrl: 'assets/images/mango_mojito.png', isSignature: false },
+  { name: 'Kiwi Mojito', category: 'Mojitos', description: 'Bright kiwi flavor with a crisp mint finish.', price: 5.75, imageUrl: 'assets/images/kiwi_mojito.png', isSignature: false },
+  { name: 'Passion Mojito', category: 'Mojitos', description: 'Sweet passion fruit with refreshing sparkle.', price: 5.75, imageUrl: 'assets/images/passion_mojito.png', isSignature: false },
+  { name: 'Raspberry Mojito', category: 'Mojitos', description: 'Fruity raspberry balanced with mint and soda.', price: 5.75, imageUrl: 'assets/images/raspberry_mojito.png', isSignature: false },
+  { name: 'Green Apple Mojito', category: 'Mojitos', description: 'Crisp green apple with a fresh citrus lift.', price: 5.75, imageUrl: 'assets/images/green_apple_mojito.png', isSignature: false },
+  { name: 'Pineapple Mojito', category: 'Mojitos', description: 'Tropical pineapple with a bright, refreshing edge.', price: 5.75, imageUrl: 'assets/images/pineapple_mojito.png', isSignature: false },
+  { name: 'Grape Mojito', category: 'Mojitos', description: 'Sweet grape flavor with a cool fizzy finish.', price: 5.75, imageUrl: 'assets/images/grape_mojito.png', isSignature: false },
   { name: 'Indian Ocean Mojito', category: 'Mojitos', description: 'Signature blue curaçao mojito with a tropical feel.', price: 6.25, imageUrl: 'assets/images/indian_ocean_mojito.png', isSignature: true },
   
   // Lemonades
@@ -161,10 +161,10 @@ const defaultMenuItems = [
   { name: 'Hibiscus Lemonade', category: 'Lemonades', description: 'Bright hibiscus tea lemonade with a floral touch.', price: 5.50, imageUrl: 'assets/images/hibiscus_lemonade.png', isSignature: true },
   
   // Hot Chocolate
-  { name: 'Classic Hot Chocolate', category: 'Hot Chocolate', description: 'Rich chocolate drink with a smooth, warm body.', price: 4.50, imageUrl: 'assets/images/hot_chocolate_premium.png', isSignature: false },
-  { name: 'Oreo Hot Chocolate', category: 'Hot Chocolate', description: 'Classic hot chocolate finished with Oreo flavor.', price: 5.00, imageUrl: 'assets/images/hot_chocolate_premium.png', isSignature: false },
-  { name: 'Caramel Hot Chocolate', category: 'Hot Chocolate', description: 'Warm chocolate with a soft caramel sweetness.', price: 5.00, imageUrl: 'assets/images/hot_chocolate_premium.png', isSignature: false },
-  { name: 'Hazelnut Hot Chocolate', category: 'Hot Chocolate', description: 'Chocolate blended with a roasted hazelnut note.', price: 5.00, imageUrl: 'assets/images/hot_chocolate_premium.png', isSignature: false }
+  { name: 'Classic Hot Chocolate', category: 'Hot Chocolate', description: 'Rich chocolate drink with a smooth, warm body.', price: 4.50, imageUrl: 'assets/images/classic_hot_chocolate.png', isSignature: false },
+  { name: 'Oreo Hot Chocolate', category: 'Hot Chocolate', description: 'Classic hot chocolate finished with Oreo flavor.', price: 5.00, imageUrl: 'assets/images/oreo_hot_chocolate.png', isSignature: false },
+  { name: 'Caramel Hot Chocolate', category: 'Hot Chocolate', description: 'Warm chocolate with a soft caramel sweetness.', price: 5.00, imageUrl: 'assets/images/caramel_hot_chocolate.png', isSignature: false },
+  { name: 'Hazelnut Hot Chocolate', category: 'Hot Chocolate', description: 'Chocolate blended with a roasted hazelnut note.', price: 5.00, imageUrl: 'assets/images/hazelnut_hot_chocolate.png', isSignature: false }
 ];
 
 // In-memory volatile fallbacks
@@ -235,12 +235,12 @@ async function seedMenuItems() {
       console.log(`🍵 Default Menu items seeded successfully in MongoDB (Loaded ${defaultMenuItems.length} premium beverages).`);
     } else {
       // Auto-update check: update image URLs of default menu items to match our new premium paths
-      console.log('🔄 Existing menu items found in MongoDB. Checking and upgrading image assets...');
+      console.log('🔄 Existing menu items found in MongoDB. Checking and upgrading image assets to new unique paths...');
       let updatedCount = 0;
       for (const item of defaultMenuItems) {
-        // If the item exists and its imageUrl still points to an old sketch placeholder, update it!
+        // Automatically sync the image URL to MONGODB if it differs from defaultMenuItems definition
         const result = await MenuItem.updateOne(
-          { name: item.name, imageUrl: { $regex: /_sketch\.png$/ } },
+          { name: item.name, imageUrl: { $ne: item.imageUrl } },
           { $set: { imageUrl: item.imageUrl } }
         );
         if (result.modifiedCount > 0) {
@@ -248,7 +248,7 @@ async function seedMenuItems() {
         }
       }
       if (updatedCount > 0) {
-        console.log(`✅ Seamlessly upgraded ${updatedCount} menu item assets to new premium paths in MongoDB.`);
+        console.log(`✅ Seamlessly upgraded ${updatedCount} menu item assets to new unique paths in MongoDB.`);
       } else {
         console.log('✨ All MongoDB menu item image assets are already up-to-date.');
       }
