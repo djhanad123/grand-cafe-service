@@ -84,10 +84,20 @@ const menuItemSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const systemSettingsSchema = new mongoose.Schema({
+  customerCooldownSec: { type: Number, default: 45 },
+  baselineResponseSec: { type: Number, default: 90 },
+  waterFactor: { type: Number, default: 0.7 },
+  waiterWeightSec: { type: Number, default: 15 },
+  waterWeightSec: { type: Number, default: 10 },
+  enableEstimators: { type: Boolean, default: true }
+});
+
 const Staff = mongoose.model('Staff', staffSchema);
 const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
 const Table = mongoose.model('Table', tableSchema);
 const MenuItem = mongoose.model('MenuItem', menuItemSchema);
+const SystemSettings = mongoose.model('SystemSettings', systemSettingsSchema);
 
 // Suggested menu items seed list
 const defaultMenuItems = [
@@ -167,6 +177,16 @@ let generatedTables = [
 ];
 let menuItems = [...defaultMenuItems]; // Pre-populate in-memory menu fallback with our signature recipes!
 
+// Dynamic operational settings (synchronized in real-time)
+let currentSettings = {
+  customerCooldownSec: 45,
+  baselineResponseSec: 90,
+  waterFactor: 0.7,
+  waiterWeightSec: 15,
+  waterWeightSec: 10,
+  enableEstimators: true
+};
+
 let isMongoConnected = false;
 
 function isDbConnected() {
@@ -238,6 +258,32 @@ async function seedMenuItems() {
   }
 }
 
+// Seed system settings helper for MongoDB
+async function loadSystemSettings() {
+  if (isDbConnected()) {
+    try {
+      let settingsDoc = await SystemSettings.findOne();
+      if (!settingsDoc) {
+        settingsDoc = new SystemSettings(currentSettings);
+        await settingsDoc.save();
+        console.log('⚙️ Default System Settings seeded in MongoDB.');
+      } else {
+        currentSettings = {
+          customerCooldownSec: settingsDoc.customerCooldownSec || 45,
+          baselineResponseSec: settingsDoc.baselineResponseSec || 90,
+          waterFactor: settingsDoc.waterFactor !== undefined ? settingsDoc.waterFactor : 0.7,
+          waiterWeightSec: settingsDoc.waiterWeightSec !== undefined ? settingsDoc.waiterWeightSec : 15,
+          waterWeightSec: settingsDoc.waterWeightSec !== undefined ? settingsDoc.waterWeightSec : 10,
+          enableEstimators: settingsDoc.enableEstimators !== false
+        };
+        console.log('⚙️ System Settings loaded from MongoDB:', currentSettings);
+      }
+    } catch (err) {
+      console.error('Error loading settings from MongoDB, using memory fallback:', err);
+    }
+  }
+}
+
 // Database Connection Options with strict timeouts
 const mongooseOptions = {
   serverSelectionTimeoutMS: 15000, // Timeout after 15s to be safe
@@ -255,6 +301,7 @@ if (mongoUri) {
       await seedAdminUser();
       await seedDefaultTables();
       await seedMenuItems();
+      await loadSystemSettings();
     })
     .catch((err) => {
       console.error('❌ Failed to connect to MongoDB Atlas. Falling back to volatile in-memory storage:', err.message);
@@ -349,7 +396,7 @@ async function getSystemStats() {
     new Date(r.createdAt).getTime() > twoHoursAgo
   );
   
-  let avgResponseTimeSec = 90; // Default baseline 1.5 minutes
+  let avgResponseTimeSec = currentSettings.baselineResponseSec; // Default baseline from operational settings
   if (responded.length > 0) {
     const sum = responded.reduce((acc, r) => {
       const start = new Date(r.createdAt).getTime();
@@ -429,6 +476,9 @@ io.on('connection', (socket) => {
     }
   })();
 
+  // Send system operational settings on connection so customer/dashboard gets it instantly
+  socket.emit('settings:update', currentSettings);
+
   // When a dashboard connects, immediately send all active requests
   socket.on('dashboard:init', async () => {
     socket.join('dashboard-room');
@@ -440,7 +490,47 @@ io.on('connection', (socket) => {
     socket.emit('staff:list', staff);
     socket.emit('table:list', tables);
     socket.emit('menu:list', menu);
+    socket.emit('settings:update', currentSettings);
     console.log(`Dashboard joined room: requests=${reqs.length}, staff=${staff.length}, tables=${tables.length}, menu=${menu.length}`);
+  });
+
+  // When a staff member changes system settings
+  socket.on('settings:change', async (newSettings) => {
+    if (newSettings && typeof newSettings === 'object') {
+      currentSettings.customerCooldownSec = Math.max(5, Math.min(300, parseInt(newSettings.customerCooldownSec) || 45));
+      currentSettings.baselineResponseSec = Math.max(10, Math.min(600, parseInt(newSettings.baselineResponseSec) || 90));
+      currentSettings.waterFactor = Math.max(0.1, Math.min(2.0, parseFloat(newSettings.waterFactor) || 0.7));
+      currentSettings.waiterWeightSec = Math.max(0, Math.min(120, parseInt(newSettings.waiterWeightSec) || 15));
+      currentSettings.waterWeightSec = Math.max(0, Math.min(120, parseInt(newSettings.waterWeightSec) || 10));
+      currentSettings.enableEstimators = !!newSettings.enableEstimators;
+      
+      if (isDbConnected()) {
+        try {
+          let settingsDoc = await SystemSettings.findOne();
+          if (!settingsDoc) {
+            settingsDoc = new SystemSettings(currentSettings);
+          } else {
+            settingsDoc.customerCooldownSec = currentSettings.customerCooldownSec;
+            settingsDoc.baselineResponseSec = currentSettings.baselineResponseSec;
+            settingsDoc.waterFactor = currentSettings.waterFactor;
+            settingsDoc.waiterWeightSec = currentSettings.waiterWeightSec;
+            settingsDoc.waterWeightSec = currentSettings.waterWeightSec;
+            settingsDoc.enableEstimators = currentSettings.enableEstimators;
+          }
+          await settingsDoc.save();
+          console.log('⚙️ System Settings saved to MongoDB.');
+        } catch (err) {
+          console.error('Error saving settings to MongoDB:', err);
+        }
+      }
+      
+      // Broadcast settings update to ALL clients (customers & dashboards)
+      io.emit('settings:update', currentSettings);
+      console.log('📢 Broadcasted updated System Settings:', currentSettings);
+      
+      // Also broadcast updated stats using new configuration weights
+      broadcastSystemStats();
+    }
   });
   // When a customer makes a service request
   socket.on('request:create', async (data) => {

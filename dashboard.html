@@ -111,6 +111,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
           Serving History
         </button>
+        <button class="nav-tab" id="tab-settings" onclick="switchTab('settings')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          System Settings
+        </button>
         <button class="nav-tab" id="tab-users" onclick="switchTab('users')" style="display: none;">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; vertical-align: middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           User Management
@@ -489,6 +493,114 @@
                   <!-- Rendered dynamically -->
                 </tbody>
               </table>
+            </div>
+          </div>
+          
+        </section>
+      </div>
+
+      <!-- PANE 4: SYSTEM SETTINGS -->
+      <div class="dashboard-pane" id="pane-settings">
+        <section class="user-management-grid">
+          
+          <!-- Wait-Time Estimator Controls -->
+          <div class="user-form-card" style="grid-column: span 1;">
+            <div>
+              <h3>Estimation Settings</h3>
+              <p style="margin-bottom: 0; font-size: 0.85rem; color: var(--color-cream-dim);">Configure dynamic wait-time estimation weights and modifiers.</p>
+            </div>
+            
+            <form id="settings-form" onsubmit="event.preventDefault(); saveSystemSettings();">
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="settings-baseline">Baseline Response Time (seconds)</label>
+                <input type="number" id="settings-baseline" class="form-input" min="10" max="600" required>
+                <small style="font-size: 0.75rem; color: var(--color-cream-dim); opacity: 0.7;">
+                  Seed average staff response time when there is no recent history.
+                </small>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="settings-cooldown">Customer Spam Cooldown (seconds)</label>
+                <input type="number" id="settings-cooldown" class="form-input" min="5" max="300" required>
+                <small style="font-size: 0.75rem; color: var(--color-cream-dim); opacity: 0.7;">
+                  Cooldown duration in seconds imposed on guests after submitting a service call.
+                </small>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="settings-water-factor">Water Factor (multiplier)</label>
+                <input type="number" id="settings-water-factor" class="form-input" step="0.1" min="0.1" max="2.0" required>
+                <small style="font-size: 0.75rem; color: var(--color-cream-dim); opacity: 0.7;">
+                  Multiplier applied to average response time for drinking water requests (e.g. 0.7 = 70% of baseline).
+                </small>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="settings-waiter-weight">Waiter Weight Per Request (seconds)</label>
+                <input type="number" id="settings-waiter-weight" class="form-input" min="0" max="120" required>
+                <small style="font-size: 0.75rem; color: var(--color-cream-dim); opacity: 0.7;">
+                  Additional seconds added to Waiter and Bill requests per active request in the pending queue.
+                </small>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="settings-water-weight">Water Weight Per Request (seconds)</label>
+                <input type="number" id="settings-water-weight" class="form-input" min="0" max="120" required>
+                <small style="font-size: 0.75rem; color: var(--color-cream-dim); opacity: 0.7;">
+                  Additional seconds added to Water requests per active request in the pending queue.
+                </small>
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; background: rgba(20, 13, 8, 0.4); padding: 0.5rem; border-radius: 6px;">
+                <input type="checkbox" id="settings-enable-estimators" style="cursor: pointer; width: 18px; height: 18px; accent-color: var(--color-gold);">
+                <label for="settings-enable-estimators" style="cursor: pointer; margin-bottom: 0; user-select: none;">Enable Wait-Time Estimators for Guests</label>
+              </div>
+              
+              <button type="submit" class="btn-generate-qr" style="margin-top: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 5px;"><polyline points="20 6 9 17 4 12"/></svg>
+                Apply System Settings
+              </button>
+              <div id="settings-success-alert" style="display: none; color: var(--color-success); margin-top: 1rem; font-size: 0.85rem; text-align: center; font-weight: 500;">
+                ✨ Operational settings updated successfully!
+              </div>
+            </form>
+          </div>
+
+          <!-- Configuration Status Panel -->
+          <div class="roster-card" style="grid-column: span 1;">
+            <h3>Active Config Status</h3>
+            <p>Current live operational parameters running across all guest tables and staff boards.</p>
+            <div class="roster-table-container">
+              <table class="roster-table">
+                <tbody>
+                  <tr>
+                    <td><strong>Live MongoDB Connection</strong></td>
+                    <td id="settings-db-status" style="color: var(--color-success); font-weight: 600;">Connected</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Active Estimator Display</strong></td>
+                    <td id="settings-status-enabled" style="font-weight: 600;">Active</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Spam Cooldown active</strong></td>
+                    <td id="settings-status-cooldown" style="font-weight: 600;">45 seconds</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Calculated EWT (Water)</strong></td>
+                    <td id="settings-status-ewt-water" style="color: var(--color-gold); font-weight: 600;">~1.5 mins</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Calculated EWT (Waiter/Bill)</strong></td>
+                    <td id="settings-status-ewt-waiter" style="color: var(--color-gold); font-weight: 600;">~2 mins</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: 1.5rem; padding: 1rem; border-radius: 12px; background: rgba(197, 160, 89, 0.05); border: 1px dashed rgba(197, 160, 89, 0.2);">
+              <h4 style="color: var(--color-gold); margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem;">💡 Instant Broadcast</h4>
+              <p style="font-size: 0.8rem; margin: 0; color: var(--color-cream-dim); line-height: 1.4;">
+                Any configuration changes made here are transmitted in real-time to all active customer devices. The tableside customer app will immediately update EWT indicators, hide estimators if disabled, and apply the new spam prevention cooldown intervals.
+              </p>
             </div>
           </div>
           

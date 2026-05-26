@@ -15,7 +15,7 @@ const tableNumber = getTableNumber() || "Demo Table 1";
 document.getElementById('tableText').innerText = `Table ${tableNumber}`;
 
 // 2. State & Cooldown Variables
-const COOLDOWN_DURATION_MS = 45000; // 45 seconds spam prevention
+let COOLDOWN_DURATION_MS = 45000; // spam prevention (dynamically synced)
 let socket = null;
 let broadcastChannel = null;
 
@@ -64,6 +64,20 @@ function initNetwork() {
         updateWaitTimeEstimates();
         renderTracker(); // Update tracker cards when active count changes
       });
+
+      // Listen for operational settings updates from server
+      socket.on('settings:update', (data) => {
+        console.log('Received updated operational settings:', data);
+        localStorage.setItem('grand_cafe_system_settings', JSON.stringify(data));
+        
+        // Dynamically update customer-side variables
+        if (data.customerCooldownSec) {
+          COOLDOWN_DURATION_MS = data.customerCooldownSec * 1000;
+        }
+        
+        updateWaitTimeEstimates();
+        renderTracker();
+      });
     } catch (e) {
       console.warn('Socket.io initialization failed, falling back to BroadcastChannel.', e);
       initBroadcastFallback();
@@ -81,6 +95,13 @@ function initBroadcastFallback() {
       const { event: evType, data } = event.data;
       if (evType === 'request:updated' && data.table === tableNumber) {
         processRequestUpdate(data);
+      } else if (evType === 'settings:updated') {
+        localStorage.setItem('grand_cafe_system_settings', JSON.stringify(data));
+        if (data.customerCooldownSec) {
+          COOLDOWN_DURATION_MS = data.customerCooldownSec * 1000;
+        }
+        updateWaitTimeEstimates();
+        renderTracker();
       }
     };
     console.log('BroadcastChannel transport initialized.');
@@ -95,6 +116,19 @@ function initBroadcastFallback() {
     loadActiveRequestsFromStorage();
     if (!event.key || event.key === 'grand_cafe_menu_items') {
       loadMenuFromLocal();
+    }
+    if (!event.key || event.key === 'grand_cafe_system_settings') {
+      try {
+        const raw = localStorage.getItem('grand_cafe_system_settings');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.customerCooldownSec) {
+            COOLDOWN_DURATION_MS = parsed.customerCooldownSec * 1000;
+          }
+          updateWaitTimeEstimates();
+          renderTracker();
+        }
+      } catch(e) {}
     }
   });
 }
@@ -283,11 +317,27 @@ function renderTracker() {
   list.innerHTML = '';
 
   let stats = { activeRequestsCount: 0, avgResponseTimeSec: 90 };
+  let settings = {
+    customerCooldownSec: 45,
+    baselineResponseSec: 90,
+    waterFactor: 0.7,
+    waiterWeightSec: 15,
+    waterWeightSec: 10,
+    enableEstimators: true
+  };
+
   try {
-    const raw = localStorage.getItem('grand_cafe_system_stats');
-    if (raw) stats = JSON.parse(raw);
+    const rawStats = localStorage.getItem('grand_cafe_system_stats');
+    if (rawStats) stats = JSON.parse(rawStats);
   } catch (e) {
     console.error('Failed parsing cached system stats:', e);
+  }
+
+  try {
+    const rawSettings = localStorage.getItem('grand_cafe_system_settings');
+    if (rawSettings) settings = JSON.parse(rawSettings);
+  } catch (e) {
+    console.error('Failed parsing cached settings:', e);
   }
 
   activeTableRequests.forEach(req => {
@@ -302,14 +352,18 @@ function renderTracker() {
     // Status Texts
     let statusText = 'Waiting for staff response...';
     if (req.status === 'new') {
-      const elapsedSeconds = Math.floor((Date.now() - new Date(req.createdAt).getTime()) / 1000);
-      const ewtSec = getEstimatedWaitTimeSeconds(req.type, stats);
-      const remainingSec = Math.max(0, ewtSec - elapsedSeconds);
-      
-      if (remainingSec > 0) {
-        statusText = `Waiting for staff response • Est: <span class="ewt-value">${formatEwtString(remainingSec)}</span>`;
+      if (settings.enableEstimators === false) {
+        statusText = 'Waiting for staff response...';
       } else {
-        statusText = `Waiting for staff response • Est: <span class="ewt-value">Any second now...</span>`;
+        const elapsedSeconds = Math.floor((Date.now() - new Date(req.createdAt).getTime()) / 1000);
+        const ewtSec = getEstimatedWaitTimeSeconds(req.type, stats, settings);
+        const remainingSec = Math.max(0, ewtSec - elapsedSeconds);
+        
+        if (remainingSec > 0) {
+          statusText = `Waiting for staff response • Est: <span class="ewt-value">${formatEwtString(remainingSec)}</span>`;
+        } else {
+          statusText = `Waiting for staff response • Est: <span class="ewt-value">Any second now...</span>`;
+        }
       }
     } else if (req.status === 'seen') {
       statusText = `☕ <strong>${req.seenBy || 'Staff'}</strong> is coming to serve you!`;
@@ -346,16 +400,18 @@ function checkActiveCooldowns() {
   });
 }
 
-function getEstimatedWaitTimeSeconds(type, stats) {
+function getEstimatedWaitTimeSeconds(type, stats, settings) {
   const activeCount = stats.activeRequestsCount || 0;
   const avgResponse = stats.avgResponseTimeSec || 90;
   
+  const waterFactor = settings ? settings.waterFactor : 0.7;
+  const waiterWeightSec = settings ? settings.waiterWeightSec : 15;
+  const waterWeightSec = settings ? settings.waterWeightSec : 10;
+  
   if (type === 'bring_water') {
-    // Water requests are typically faster to satisfy (baseline 70% of average)
-    return Math.round((avgResponse * 0.7) + (activeCount * 10));
+    return Math.round((avgResponse * waterFactor) + (activeCount * waterWeightSec));
   } else if (type === 'call_waiter' || type === 'ask_bill') {
-    // Regular service requests
-    return Math.round(avgResponse + (activeCount * 15));
+    return Math.round(avgResponse + (activeCount * waiterWeightSec));
   }
   return avgResponse;
 }
@@ -376,19 +432,45 @@ function formatEwtString(seconds) {
 
 function updateWaitTimeEstimates() {
   let stats = { activeRequestsCount: 0, avgResponseTimeSec: 90 };
+  let settings = {
+    customerCooldownSec: 45,
+    baselineResponseSec: 90,
+    waterFactor: 0.7,
+    waiterWeightSec: 15,
+    waterWeightSec: 10,
+    enableEstimators: true
+  };
+
   try {
-    const raw = localStorage.getItem('grand_cafe_system_stats');
-    if (raw) stats = JSON.parse(raw);
+    const rawStats = localStorage.getItem('grand_cafe_system_stats');
+    if (rawStats) stats = JSON.parse(rawStats);
   } catch (e) {
     console.error('Failed parsing cached system stats:', e);
+  }
+
+  try {
+    const rawSettings = localStorage.getItem('grand_cafe_system_settings');
+    if (rawSettings) settings = JSON.parse(rawSettings);
+  } catch (e) {
+    console.error('Failed parsing cached settings:', e);
+  }
+
+  // Adjust cooldown duration dynamically
+  if (settings && settings.customerCooldownSec) {
+    COOLDOWN_DURATION_MS = settings.customerCooldownSec * 1000;
   }
   
   const types = ['call_waiter', 'bring_water', 'ask_bill'];
   types.forEach(type => {
     const el = document.getElementById(`ewt-${type}`);
     if (el) {
-      const ewtSec = getEstimatedWaitTimeSeconds(type, stats);
-      el.innerText = `Est: ${formatEwtString(ewtSec)}`;
+      if (settings.enableEstimators === false) {
+        el.style.display = 'none';
+      } else {
+        el.style.display = 'inline';
+        const ewtSec = getEstimatedWaitTimeSeconds(type, stats, settings);
+        el.innerText = `Est: ${formatEwtString(ewtSec)}`;
+      }
     }
   });
 }
@@ -486,12 +568,22 @@ function submitServiceRequest(type) {
 }
 
 // 6. Modal Visual Triggers
+let successToastTimeout = null;
+
 function showSuccessModal(customMessage) {
   const toast = document.getElementById('successToast');
   if (customMessage) {
     document.getElementById('successMessage').innerText = customMessage;
   }
   toast.classList.add('active');
+
+  // Auto dismiss after 3.5 seconds
+  if (successToastTimeout) {
+    clearTimeout(successToastTimeout);
+  }
+  successToastTimeout = setTimeout(() => {
+    closeSuccessToast();
+  }, 3500);
 }
 
 function closeSuccessToast() {

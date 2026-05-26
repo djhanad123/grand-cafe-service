@@ -222,17 +222,18 @@
     </div>
   </div>
 
-  <!-- Elegant Success Overlay Modal -->
+  <!-- Elegant Non-Blocking Success Toast Notification -->
   <div class="toast-overlay" id="successToast">
     <div class="toast-content">
-      <div class="success-ring-container">
-        <div class="success-ring">
-          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <div class="success-ring-container" style="margin-bottom: 0;">
+        <div class="success-ring" style="width: 36px; height: 36px; box-shadow: 0 0 10px var(--color-success-glow);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
       </div>
-      <h2 id="successTitle">Request Sent!</h2>
-      <p id="successMessage">Your request has been sent successfully. A waiter will be with you shortly.</p>
-      <button class="toast-btn" onclick="closeSuccessToast()">Got It</button>
+      <div class="toast-texts" style="display: flex; flex-direction: column; gap: 2px;">
+        <h3 id="successTitle" style="font-size: 0.95rem; font-weight: 600; margin: 0; color: #fff;">Request Sent!</h3>
+        <p id="successMessage" style="font-size: 0.8rem; margin: 0; color: var(--color-cream-dim); line-height: 1.3;">Your request has been sent successfully.</p>
+      </div>
     </div>
   </div>
 

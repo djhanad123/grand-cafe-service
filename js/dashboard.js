@@ -352,6 +352,10 @@ function switchTab(tabName) {
     renderHistory();
   }
 
+  if (tabName === 'settings') {
+    loadSettingsIntoForm();
+  }
+
   if (tabName === 'qr') {
     // Populate base URL automatically if blank
     const baseUrlInput = document.getElementById('qr-base-url');
@@ -521,6 +525,17 @@ function initNetwork() {
       socket.on('db:status', (data) => {
         console.log('Received database status from server:', data);
         updateDbWarningBanner(data.isConnected);
+        localStorage.setItem('grand_cafe_db_connected', data.isConnected ? 'true' : 'false');
+        if (typeof systemSettings !== 'undefined') {
+          updateDashboardSettingsView(systemSettings);
+        }
+      });
+
+      // Listen for system configuration settings updates
+      socket.on('settings:update', (data) => {
+        console.log('Received system operational settings:', data);
+        localStorage.setItem('grand_cafe_system_settings', JSON.stringify(data));
+        updateDashboardSettingsView(data);
       });
 
     } catch (e) {
@@ -555,6 +570,9 @@ function initBroadcastFallback() {
           renderBoard();
           recalculateStats();
         }
+      } else if (evType === 'settings:updated') {
+        localStorage.setItem('grand_cafe_system_settings', JSON.stringify(data));
+        updateDashboardSettingsView(data);
       }
     };
   }
@@ -562,6 +580,15 @@ function initBroadcastFallback() {
   loadFromLocalDB();
   loadTablesFromLocal();
   loadMenuFromLocal();
+  
+  // Seed settings on startup from local storage
+  try {
+    const raw = localStorage.getItem('grand_cafe_system_settings');
+    if (raw) {
+      systemSettings = JSON.parse(raw);
+      updateDashboardSettingsView(systemSettings);
+    }
+  } catch(e) {}
 
   window.addEventListener('storage', (event) => {
     if (!event.key || event.key === 'grand_cafe_requests') {
@@ -572,6 +599,15 @@ function initBroadcastFallback() {
     }
     if (!event.key || event.key === 'grand_cafe_menu_items') {
       loadMenuFromLocal();
+    }
+    if (!event.key || event.key === 'grand_cafe_system_settings') {
+      try {
+        const raw = localStorage.getItem('grand_cafe_system_settings');
+        if (raw) {
+          systemSettings = JSON.parse(raw);
+          updateDashboardSettingsView(systemSettings);
+        }
+      } catch (e) {}
     }
     if (!event.key || event.key === 'grand_cafe_staff_users') {
       try {
@@ -1322,9 +1358,17 @@ async function checkDbStatus() {
     const res = await fetch('/api/db-status');
     const data = await res.json();
     updateDbWarningBanner(data.isConnected);
+    localStorage.setItem('grand_cafe_db_connected', data.isConnected ? 'true' : 'false');
+    if (typeof systemSettings !== 'undefined') {
+      updateDashboardSettingsView(systemSettings);
+    }
   } catch (err) {
     console.error('Failed to fetch database connection status from server:', err);
     updateDbWarningBanner(false); // Default to showing warning if network call fails
+    localStorage.setItem('grand_cafe_db_connected', 'false');
+    if (typeof systemSettings !== 'undefined') {
+      updateDashboardSettingsView(systemSettings);
+    }
   }
 }
 
@@ -1333,6 +1377,15 @@ window.addEventListener('DOMContentLoaded', () => {
   checkStaffSession();
   initNetwork();
   checkDbStatus(); // Immediate database status check
+
+  // Seed settings on startup
+  try {
+    const raw = localStorage.getItem('grand_cafe_system_settings');
+    if (raw) {
+      systemSettings = JSON.parse(raw);
+      updateDashboardSettingsView(systemSettings);
+    }
+  } catch (e) {}
   
   if (!socket || !socket.connected) {
     loadMenuFromLocal();
@@ -1675,4 +1728,169 @@ function toggleMenuItemAvailability(name, isAvailable) {
   }
   window.dispatchEvent(new Event('storage'));
   renderMenuManager();
+}
+
+// ==========================================================================
+// SYSTEM SETTINGS CONTROLLER
+// ==========================================================================
+
+let systemSettings = {
+  customerCooldownSec: 45,
+  baselineResponseSec: 90,
+  waterFactor: 0.7,
+  waiterWeightSec: 15,
+  waterWeightSec: 10,
+  enableEstimators: true
+};
+
+function loadSettingsIntoForm() {
+  try {
+    const raw = localStorage.getItem('grand_cafe_system_settings');
+    if (raw) {
+      systemSettings = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('Failed to parse cached system settings:', e);
+  }
+
+  const cooldownEl = document.getElementById('settings-cooldown');
+  const baselineEl = document.getElementById('settings-baseline');
+  const waterFactorEl = document.getElementById('settings-water-factor');
+  const waiterWeightEl = document.getElementById('settings-waiter-weight');
+  const waterWeightEl = document.getElementById('settings-water-weight');
+  const enableEl = document.getElementById('settings-enable-estimators');
+
+  if (cooldownEl) cooldownEl.value = systemSettings.customerCooldownSec || 45;
+  if (baselineEl) baselineEl.value = systemSettings.baselineResponseSec || 90;
+  if (waterFactorEl) waterFactorEl.value = systemSettings.waterFactor !== undefined ? systemSettings.waterFactor : 0.7;
+  if (waiterWeightEl) waiterWeightEl.value = systemSettings.waiterWeightSec !== undefined ? systemSettings.waiterWeightSec : 15;
+  if (waterWeightEl) waterWeightEl.value = systemSettings.waterWeightSec !== undefined ? systemSettings.waterWeightSec : 10;
+  if (enableEl) enableEl.checked = systemSettings.enableEstimators !== false;
+
+  updateDashboardSettingsView(systemSettings);
+}
+
+function updateDashboardSettingsView(settings) {
+  if (!settings) return;
+  systemSettings = settings;
+
+  // Render variables in form inputs if active setting matches inputs (in case of real-time update from another terminal)
+  const cooldownEl = document.getElementById('settings-cooldown');
+  const baselineEl = document.getElementById('settings-baseline');
+  const waterFactorEl = document.getElementById('settings-water-factor');
+  const waiterWeightEl = document.getElementById('settings-waiter-weight');
+  const waterWeightEl = document.getElementById('settings-water-weight');
+  const enableEl = document.getElementById('settings-enable-estimators');
+
+  // Only update inputs if the user is not actively typing or if settings changed
+  if (document.activeElement !== cooldownEl && cooldownEl) cooldownEl.value = settings.customerCooldownSec || 45;
+  if (document.activeElement !== baselineEl && baselineEl) baselineEl.value = settings.baselineResponseSec || 90;
+  if (document.activeElement !== waterFactorEl && waterFactorEl) waterFactorEl.value = settings.waterFactor !== undefined ? settings.waterFactor : 0.7;
+  if (document.activeElement !== waiterWeightEl && waiterWeightEl) waiterWeightEl.value = settings.waiterWeightSec !== undefined ? settings.waiterWeightSec : 15;
+  if (document.activeElement !== waterWeightEl && waterWeightEl) waterWeightEl.value = settings.waterWeightSec !== undefined ? settings.waterWeightSec : 10;
+  if (enableEl) enableEl.checked = settings.enableEstimators !== false;
+
+  // Render active config status table
+  const dbStatusEl = document.getElementById('settings-db-status');
+  const statusEnabledEl = document.getElementById('settings-status-enabled');
+  const statusCooldownEl = document.getElementById('settings-status-cooldown');
+  const statusWaterEwtEl = document.getElementById('settings-status-ewt-water');
+  const statusWaiterEwtEl = document.getElementById('settings-status-ewt-waiter');
+
+  // Determine database connection state
+  const isMongoConnected = localStorage.getItem('grand_cafe_db_connected') === 'true';
+
+  if (dbStatusEl) {
+    if (isMongoConnected) {
+      dbStatusEl.innerText = 'Connected (MongoDB Atlas)';
+      dbStatusEl.style.color = 'var(--color-success)';
+    } else {
+      dbStatusEl.innerText = 'Volatile Storage (In-Memory)';
+      dbStatusEl.style.color = 'var(--color-urgent)';
+    }
+  }
+
+  if (statusEnabledEl) {
+    statusEnabledEl.innerText = settings.enableEstimators ? 'Active' : 'Disabled (Hidden)';
+    statusEnabledEl.style.color = settings.enableEstimators ? 'var(--color-success)' : 'var(--color-urgent)';
+  }
+
+  if (statusCooldownEl) {
+    statusCooldownEl.innerText = `${settings.customerCooldownSec} seconds`;
+  }
+
+  // Calculate dynamic EWT values for stats panel using current queue count
+  let stats = { activeRequestsCount: 0, avgResponseTimeSec: settings.baselineResponseSec || 90 };
+  try {
+    const raw = localStorage.getItem('grand_cafe_system_stats');
+    if (raw) stats = JSON.parse(raw);
+  } catch (e) {}
+
+  const activeCount = stats.activeRequestsCount || 0;
+  const avgResponse = stats.avgResponseTimeSec || 90;
+
+  const ewtWater = Math.round((avgResponse * (settings.waterFactor || 0.7)) + (activeCount * (settings.waterWeightSec || 10)));
+  const ewtWaiter = Math.round(avgResponse + (activeCount * (settings.waiterWeightSec || 15)));
+
+  if (statusWaterEwtEl) statusWaterEwtEl.innerText = `~${Math.round(ewtWater / 60 * 10) / 10} mins (${ewtWater}s)`;
+  if (statusWaiterEwtEl) statusWaiterEwtEl.innerText = `~${Math.round(ewtWaiter / 60 * 10) / 10} mins (${ewtWaiter}s)`;
+}
+
+function saveSystemSettings() {
+  const customerCooldownSec = parseInt(document.getElementById('settings-cooldown').value) || 45;
+  const baselineResponseSec = parseInt(document.getElementById('settings-baseline').value) || 90;
+  const waterFactor = parseFloat(document.getElementById('settings-water-factor').value) || 0.7;
+  const waiterWeightSec = parseInt(document.getElementById('settings-waiter-weight').value) || 15;
+  const waterWeightSec = parseInt(document.getElementById('settings-water-weight').value) || 10;
+  const enableEstimators = document.getElementById('settings-enable-estimators').checked;
+
+  const payload = {
+    customerCooldownSec,
+    baselineResponseSec,
+    waterFactor,
+    waiterWeightSec,
+    waterWeightSec,
+    enableEstimators
+  };
+
+  localStorage.setItem('grand_cafe_system_settings', JSON.stringify(payload));
+  updateDashboardSettingsView(payload);
+
+  if (socket && socket.connected) {
+    socket.emit('settings:change', payload);
+  } else {
+    // Offline Broadcast fallback
+    if (broadcastChannel) {
+      broadcastChannel.postMessage({
+        event: 'settings:updated',
+        data: payload
+      });
+    }
+  }
+
+  // Show a sleek alert inside the settings form
+  const alertEl = document.getElementById('settings-success-alert');
+  if (alertEl) {
+    alertEl.style.display = 'block';
+    setTimeout(() => {
+      alertEl.style.display = 'none';
+    }, 3000);
+  }
+
+  // Synthesize soft success chirp
+  try {
+    if (audioContext && !isMuted) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+      gain.gain.setValueAtTime(0, audioContext.currentTime);
+      gain.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start();
+      osc.stop(audioContext.currentTime + 0.35);
+    }
+  } catch (e) {}
 }
