@@ -801,7 +801,8 @@ function renderCustomerMenu() {
     const priceFormatted = typeof item.price === 'number' ? `$${item.price.toFixed(2)}` : `$${item.price}`;
     
     card.innerHTML = `
-      <div class="menu-item-img-wrapper" style="background-image: url('${item.imageUrl || sketchPath}');">
+      <div class="menu-item-img-wrapper">
+        <div class="menu-item-img" style="background-image: url('${item.imageUrl || sketchPath}');"></div>
         ${sigBadge}
         ${soldOutOverlay}
       </div>
@@ -816,6 +817,20 @@ function renderCustomerMenu() {
         </div>
       </div>
     `;
+
+    // Tap/Click handler to support mobile expansion & desktop access
+    card.addEventListener('click', () => {
+      const wasExpanded = card.classList.contains('expanded');
+      
+      // Collapse all other cards in the grid first for a clean visual accordion effect
+      document.querySelectorAll('.menu-item-card').forEach(c => {
+        c.classList.remove('expanded');
+      });
+      
+      if (!wasExpanded) {
+        card.classList.add('expanded');
+      }
+    });
     
     grid.appendChild(card);
   });
