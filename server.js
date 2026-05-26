@@ -336,6 +336,47 @@ async function getTables() {
   return generatedTables;
 }
 
+async function getSystemStats() {
+  const reqs = await getRequests();
+  
+  // Count active 'new' requests globally
+  const activeRequestsCount = reqs.filter(r => r.status === 'new').length;
+  
+  // Calculate average response time in seconds of requests marked 'seen' or 'completed' in the last 2 hours
+  const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+  const responded = reqs.filter(r => 
+    r.seenAt && 
+    new Date(r.createdAt).getTime() > twoHoursAgo
+  );
+  
+  let avgResponseTimeSec = 90; // Default baseline 1.5 minutes
+  if (responded.length > 0) {
+    const sum = responded.reduce((acc, r) => {
+      const start = new Date(r.createdAt).getTime();
+      const end = new Date(r.seenAt).getTime();
+      return acc + Math.max(0, end - start);
+    }, 0);
+    avgResponseTimeSec = Math.round((sum / responded.length) / 1000);
+    // Keep it within a realistic range (minimum 30s, maximum 300s)
+    avgResponseTimeSec = Math.max(30, Math.min(300, avgResponseTimeSec));
+  }
+  
+  return {
+    activeRequestsCount,
+    avgResponseTimeSec
+  };
+}
+
+async function broadcastSystemStats() {
+  try {
+    const stats = await getSystemStats();
+    io.emit('system:stats', stats);
+    console.log(`📊 Broadcasted real-time wait statistics: activeCount=${stats.activeRequestsCount}, avgResponseSec=${stats.avgResponseTimeSec}s`);
+  } catch (err) {
+    console.error('Error broadcasting system stats:', err);
+  }
+}
+
 // Clean up old completed requests (older than 24 hours) to avoid memory growth and store history for one day
 setInterval(async () => {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -375,6 +416,16 @@ io.on('connection', (socket) => {
       socket.emit('menu:list', menu);
     } catch(e) {
       console.error('Error emitting menu on connection:', e);
+    }
+  })();
+
+  // Send wait-time statistics on connection so customer gets it instantly
+  (async () => {
+    try {
+      const stats = await getSystemStats();
+      socket.emit('system:stats', stats);
+    } catch (e) {
+      console.error('Error emitting system stats on connection:', e);
     }
   })();
 
@@ -482,6 +533,9 @@ io.on('connection', (socket) => {
     
     // Acknowledge to customer client
     socket.emit('request:success', { id: newRequestObj.id, message: 'Your request has been sent successfully.' });
+
+    // Broadcast updated wait times due to new request in queue
+    broadcastSystemStats();
   });
 
   // When a staff member updates a request status (new -> seen -> completed)
@@ -553,6 +607,9 @@ io.on('connection', (socket) => {
     if (updatedReqObj) {
       // Broadcast update to all connected clients (dashboards and customers)
       io.emit('request:updated', updatedReqObj);
+      
+      // Broadcast updated wait times due to shorted/changed queue
+      broadcastSystemStats();
     }
   });
 
@@ -583,6 +640,9 @@ io.on('connection', (socket) => {
     const currentRequests = await getRequests();
     // Broadcast refreshed list to dashboards
     io.to('dashboard-room').emit('request:list', currentRequests);
+
+    // Broadcast updated stats
+    broadcastSystemStats();
   });
 
   // Admin capability: create new staff profile and sync globally

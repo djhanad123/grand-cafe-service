@@ -255,6 +255,15 @@ p {
   font-weight: 300;
 }
 
+.ewt-value {
+  color: var(--color-gold);
+  font-weight: 600;
+  opacity: 0.95;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 8px rgba(197, 160, 89, 0.2);
+}
+
 .btn-arrow {
   color: var(--color-cream-dim);
   font-size: 1.2rem;

@@ -56,6 +56,14 @@ function initNetwork() {
         localStorage.setItem('grand_cafe_menu_items', JSON.stringify(menuItems));
         renderCustomerMenu();
       });
+
+      // Listen for real-time wait-time statistics from server
+      socket.on('system:stats', (data) => {
+        console.log('Received real-time wait-time stats:', data);
+        localStorage.setItem('grand_cafe_system_stats', JSON.stringify(data));
+        updateWaitTimeEstimates();
+        renderTracker(); // Update tracker cards when active count changes
+      });
     } catch (e) {
       console.warn('Socket.io initialization failed, falling back to BroadcastChannel.', e);
       initBroadcastFallback();
@@ -274,6 +282,14 @@ function renderTracker() {
   panel.style.display = 'block';
   list.innerHTML = '';
 
+  let stats = { activeRequestsCount: 0, avgResponseTimeSec: 90 };
+  try {
+    const raw = localStorage.getItem('grand_cafe_system_stats');
+    if (raw) stats = JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed parsing cached system stats:', e);
+  }
+
   activeTableRequests.forEach(req => {
     const card = document.createElement('div');
     card.className = `tracker-card tracker-${req.status}`;
@@ -285,7 +301,17 @@ function renderTracker() {
 
     // Status Texts
     let statusText = 'Waiting for staff response...';
-    if (req.status === 'seen') {
+    if (req.status === 'new') {
+      const elapsedSeconds = Math.floor((Date.now() - new Date(req.createdAt).getTime()) / 1000);
+      const ewtSec = getEstimatedWaitTimeSeconds(req.type, stats);
+      const remainingSec = Math.max(0, ewtSec - elapsedSeconds);
+      
+      if (remainingSec > 0) {
+        statusText = `Waiting for staff response • Est: <span class="ewt-value">${formatEwtString(remainingSec)}</span>`;
+      } else {
+        statusText = `Waiting for staff response • Est: <span class="ewt-value">Any second now...</span>`;
+      }
+    } else if (req.status === 'seen') {
       statusText = `☕ <strong>${req.seenBy || 'Staff'}</strong> is coming to serve you!`;
     } else if (req.status === 'completed') {
       statusText = `✨ Request completed. Thank you!`;
@@ -316,6 +342,53 @@ function checkActiveCooldowns() {
     if (cooldownEnd && parseInt(cooldownEnd) > now) {
       const remainingTime = parseInt(cooldownEnd) - now;
       startCooldownTimer(type, remainingTime);
+    }
+  });
+}
+
+function getEstimatedWaitTimeSeconds(type, stats) {
+  const activeCount = stats.activeRequestsCount || 0;
+  const avgResponse = stats.avgResponseTimeSec || 90;
+  
+  if (type === 'bring_water') {
+    // Water requests are typically faster to satisfy (baseline 70% of average)
+    return Math.round((avgResponse * 0.7) + (activeCount * 10));
+  } else if (type === 'call_waiter' || type === 'ask_bill') {
+    // Regular service requests
+    return Math.round(avgResponse + (activeCount * 15));
+  }
+  return avgResponse;
+}
+
+function formatEwtString(seconds) {
+  if (seconds < 60) return `~${seconds}s`;
+  const mins = Math.round(seconds / 60);
+  const remainingSecs = seconds % 60;
+  if (remainingSecs === 0) return `~${mins} min${mins > 1 ? 's' : ''}`;
+  // Express as e.g. 1.5 mins if close to 30s, or just mins
+  const halfMin = remainingSecs >= 20 && remainingSecs <= 40;
+  if (halfMin) {
+    const minsFloat = Math.floor(seconds / 60);
+    return `~${minsFloat}.5 min${minsFloat >= 1 ? 's' : ''}`;
+  }
+  return `~${Math.round(seconds / 60)} min${Math.round(seconds / 60) > 1 ? 's' : ''}`;
+}
+
+function updateWaitTimeEstimates() {
+  let stats = { activeRequestsCount: 0, avgResponseTimeSec: 90 };
+  try {
+    const raw = localStorage.getItem('grand_cafe_system_stats');
+    if (raw) stats = JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed parsing cached system stats:', e);
+  }
+  
+  const types = ['call_waiter', 'bring_water', 'ask_bill'];
+  types.forEach(type => {
+    const el = document.getElementById(`ewt-${type}`);
+    if (el) {
+      const ewtSec = getEstimatedWaitTimeSeconds(type, stats);
+      el.innerText = `Est: ${formatEwtString(ewtSec)}`;
     }
   });
 }
@@ -431,11 +504,17 @@ window.addEventListener('DOMContentLoaded', () => {
   initNetwork();
   checkActiveCooldowns();
   
+  // Load active requests and wait-time estimates immediately on startup
+  loadActiveRequestsFromStorage();
+  updateWaitTimeEstimates();
+  
   // Try loading once on start (safeguard)
   if (!socket || !socket.connected) {
-    loadActiveRequestsFromStorage();
     loadMenuFromLocal();
   }
+
+  // Periodically refresh the tracker countdowns every 10 seconds
+  setInterval(renderTracker, 10000);
 });
 
 // ==========================================================================
