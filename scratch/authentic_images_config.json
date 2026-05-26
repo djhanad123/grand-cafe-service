@@ -1,0 +1,56 @@
+{
+  "description": "Authentic product photography prompts for grand-cafe-service beverage overhaul",
+  "style": "Clean, solid neutral light-grey studio background, realistic organic colors, no people, no text, no hands",
+  "drinks": [
+    {
+      "name": "Flat White",
+      "filename": "flat_white.png",
+      "prompt": "A premium hot Flat White coffee in a minimalist white ceramic cup, showcasing silky microfoam with a delicate tulip latte art design on top. Plain solid neutral light-grey studio background. Realistic organic colors, warm studio lighting, close-up professional product photography, high-end café menu style, no people, no text, no hands."
+    },
+    {
+      "name": "Cortado",
+      "filename": "cortado.png",
+      "prompt": "A premium hot Cortado coffee in a small, clean double-walled glass cup, displaying layers of rich dark espresso cut with creamy steamed milk in equal parts. Plain solid neutral light-grey studio background. Realistic organic colors, soft studio lighting, close-up product photography, luxury commercial drink style, no people, no hands, no logos."
+    },
+    {
+      "name": "Iced Mocha",
+      "filename": "iced_mocha.png",
+      "prompt": "A premium Iced Mocha in a tall, clear glass, featuring beautiful marbled swirls of dark chocolate syrup, bold espresso, and cold milk over crystal-clear square ice cubes. A light dusting of cocoa powder on top. Plain solid neutral light-grey studio background. Realistic organic colors, crisp studio lighting, condensation on the glass, high-end professional beverage photography."
+    },
+    {
+      "name": "Iced Americano",
+      "filename": "iced_americano.png",
+      "prompt": "A premium Iced Americano in a clean modern glass, showing translucent deep amber-brown espresso poured over clear, glistening ice cubes, with light crema bubbles on top. Plain solid neutral light-grey studio background. Realistic organic colors, elegant studio lighting, sharp details, professional commercial beverage catalog style."
+    },
+    {
+      "name": "Hot Matcha Latte",
+      "filename": "hot_matcha_latte.png",
+      "prompt": "A premium Hot Matcha Latte in a round, clean ceramic cup, featuring a vibrant ceremonial jade-green matcha color topped with silky-smooth white microfoam latte art. Plain solid neutral light-grey studio background. Realistic organic colors, professional product close-up photography, elegant, organic, high-end café look."
+    },
+    {
+      "name": "Cold Matcha Latte",
+      "filename": "cold_matcha_latte.png",
+      "prompt": "A premium Iced Matcha Latte in a tall glass, displaying a dramatic, beautiful layered gradient from a rich vibrant green matcha top layer slowly blending into creamy white milk at the bottom with square ice cubes. Plain solid neutral light-grey studio background. Realistic organic colors, professional beverage photography, clean studio lighting."
+    },
+    {
+      "name": "Flavored Matcha Latte",
+      "filename": "flavored_matcha_latte.png",
+      "prompt": "A premium hot Flavored Matcha Latte in a modern glass cup, featuring a pastel-green matcha color with a delicate, creamy vanilla foam crown dusted with fine green tea powder. Plain solid neutral light-grey studio background. Realistic organic colors, luxury commercial style, organic close-up product photography."
+    },
+    {
+      "name": "Classic Hot Chocolate",
+      "filename": "classic_hot_chocolate.png",
+      "prompt": "A premium hot chocolate in a clean, rounded dark ceramic mug, showing a rich, thick dark-brown cocoa texture topped with a glossy froth swirl and a dusting of chocolate powder. Plain solid neutral light-grey studio background. Realistic organic colors, warm studio lighting, close-up professional catalog photography."
+    },
+    {
+      "name": "Oreo Hot Chocolate",
+      "filename": "oreo_hot_chocolate.png",
+      "prompt": "A premium Oreo Hot Chocolate in a clear glass mug, featuring rich dark-brown hot cocoa topped with fluffy whipped cream and a dusting of dark chocolate cookie crumbs, with a whole real chocolate sandwich cookie resting on the side saucer. Plain solid neutral light-grey studio background. Realistic organic colors, sharp details, professional food commercial style, warm inviting lighting."
+    },
+    {
+      "name": "Hazelnut Hot Chocolate",
+      "filename": "hazelnut_hot_chocolate.png",
+      "prompt": "A premium Hazelnut Hot Chocolate in an elegant modern ceramic mug, showing smooth milk chocolate cocoa with a warm hazelnut-gold undertone, finished with a delicate chocolate drizzle on the froth. Plain solid neutral light-grey studio background. Realistic organic colors, warm, inviting studio lighting, product close-up."
+    }
+  ]
+}
