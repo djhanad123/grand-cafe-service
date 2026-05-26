@@ -477,12 +477,12 @@ function updateWaitTimeEstimates() {
 
 function startCooldownTimer(type, duration) {
   const button = document.getElementById(`btn-${type}`);
-  const spinner = document.getElementById(`spinner-${type}`);
-  const descriptionText = button.querySelector('.btn-texts p');
-  const originalDescription = descriptionText.innerText;
+  const ewtEl = document.getElementById(`ewt-${type}`);
   
-  button.disabled = true;
-  button.classList.add('cooldown-active');
+  if (button) {
+    button.disabled = true;
+    button.classList.add('cooldown-active');
+  }
   
   const endTimestamp = Date.now() + duration;
   localStorage.setItem(`cooldown_end_${type}`, endTimestamp);
@@ -493,12 +493,16 @@ function startCooldownTimer(type, duration) {
 
     if (remaining <= 0) {
       clearInterval(interval);
-      button.disabled = false;
-      button.classList.remove('cooldown-active');
-      descriptionText.innerText = originalDescription;
+      if (button) {
+        button.disabled = false;
+        button.classList.remove('cooldown-active');
+      }
       localStorage.removeItem(`cooldown_end_${type}`);
+      updateWaitTimeEstimates();
     } else {
-      descriptionText.innerText = `Request sent! Re-enabling in ${remaining}s...`;
+      if (ewtEl) {
+        ewtEl.innerText = `${remaining}s`;
+      }
     }
   }, 1000);
 }
@@ -600,10 +604,8 @@ window.addEventListener('DOMContentLoaded', () => {
   loadActiveRequestsFromStorage();
   updateWaitTimeEstimates();
   
-  // Try loading once on start (safeguard)
-  if (!socket || !socket.connected) {
-    loadMenuFromLocal();
-  }
+  // Unconditionally render the digital menu immediately on startup from cache
+  loadMenuFromLocal();
 
   // Periodically refresh the tracker countdowns every 10 seconds
   setInterval(renderTracker, 10000);

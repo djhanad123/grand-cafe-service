@@ -80,7 +80,7 @@ p {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
+  padding: 1.5rem 1.5rem 150px 1.5rem; /* bottom padding to clear floating service widget */
   justify-content: space-between;
 }
 
@@ -2671,6 +2671,210 @@ input:checked + .slider:before {
 @keyframes iconBlink {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(0.95); }
+}
+
+/* ==========================================================================
+   PREMIUM FLOATING TABLESIDE SERVICE WIDGET
+   ========================================================================== */
+
+.floating-service-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 440px;
+  background: rgba(20, 13, 8, 0.85);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  border-radius: 20px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(197, 160, 89, 0.15);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideUpWidget 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpWidget {
+  from {
+    transform: translate(-50%, 40px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.widget-table-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.widget-table-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #2ecc71;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.8);
+  display: inline-block;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px rgba(46, 204, 113, 0.8); }
+  50% { transform: scale(1.2); opacity: 0.6; box-shadow: 0 0 12px rgba(46, 204, 113, 0.4); }
+  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px rgba(46, 204, 113, 0.8); }
+}
+
+#tableText {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-gold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.widget-sync-status {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.widget-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.widget-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(197, 160, 89, 0.15);
+  border-radius: 12px;
+  padding: 8px 4px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.widget-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(197, 160, 89, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.widget-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.widget-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background: rgba(20, 13, 8, 0.4) !important;
+  border-color: rgba(197, 160, 89, 0.05) !important;
+}
+
+.widget-btn-icon {
+  font-size: 1.15rem;
+  transition: transform 0.2s ease;
+}
+
+.widget-btn:hover:not(:disabled) .widget-btn-icon {
+  transform: scale(1.15);
+}
+
+.widget-btn-title {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-cream);
+  letter-spacing: 0.02em;
+}
+
+.widget-btn-ewt {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--color-gold);
+  background: rgba(197, 160, 89, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(197, 160, 89, 0.12);
+  transition: all 0.25s ease;
+}
+
+.widget-btn.cooldown-active .widget-btn-ewt {
+  color: var(--color-alert) !important;
+  background: rgba(231, 76, 60, 0.1) !important;
+  border-color: rgba(231, 76, 60, 0.2) !important;
+}
+
+/* Float Tracker above widget */
+.guest-tracker-panel {
+  position: fixed !important;
+  bottom: 112px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 92% !important;
+  max-width: 440px !important;
+  z-index: 999 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: block;
+}
+
+.guest-tracker-panel .tracker-heading {
+  display: none !important; /* Hide tracker section heading to save vital screen estate */
+}
+
+.tracker-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.tracker-card {
+  margin: 0 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 10px rgba(197,160,89,0.1) !important;
+  border: 1px solid rgba(197, 160, 89, 0.3) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  animation: slideUpWidget 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.menu-container-flat {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  width: 100%;
 }
 
 
