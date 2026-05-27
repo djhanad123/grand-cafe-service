@@ -297,16 +297,15 @@ const mongoUri = process.env.MONGODB_URI;
 if (mongoUri) {
   mongoose.connection.on('connected', async () => {
     console.log('✅ Connected to MongoDB Atlas successfully.');
+    isMongoConnected = true;
     try {
       // Ensure seeders and settings are fully initialized on connection
       await seedAdminUser();
       await seedDefaultTables();
       await seedMenuItems();
       await loadSystemSettings();
-      isMongoConnected = true;
     } catch (err) {
       console.error('❌ Error initializing database after connection:', err.message);
-      isMongoConnected = false;
     }
   });
 
