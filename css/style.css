@@ -2474,7 +2474,7 @@ p {
 .menu-item-img {
   width: 100%;
   height: 100%;
-  background-size: contain;
+  background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
