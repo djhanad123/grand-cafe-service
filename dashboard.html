@@ -254,12 +254,12 @@
                 </small>
               </div>
               
-              <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div>
+              <div class="form-group" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
+                <div style="min-width: 0;">
                   <label for="qr-start-table">Start Table #</label>
                   <input type="number" id="qr-start-table" class="form-input" value="1" min="1">
                 </div>
-                <div>
+                <div style="min-width: 0;">
                   <label for="qr-end-table">End Table #</label>
                   <input type="number" id="qr-end-table" class="form-input" value="12" min="1">
                 </div>
