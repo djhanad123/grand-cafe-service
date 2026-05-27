@@ -35,6 +35,16 @@ We have successfully overhauled the customer landing experience (`customer.html`
     * **Hazelnut Hot Choc**: An elegant ceramic mug displaying smooth milk chocolate cocoa with a warm hazelnut-gold undertone, finished with a chocolate drizzle.
 * **Spacious 3-Column Responsive Grid Layout**: Styled the card grid responsive: keeping a spacious 2-column mobile layout for optimal card reading, and gracefully scaling to a **3-column grid layout on tablets and desktops** (min-width: 768px). All drink visuals scale beautifully to cover the entire card width with absolutely zero side gaps.
 
+## 🛠️ Supplemental Fixes: Customer-Side Waiter Toaster & Success Toast Layout
+
+* **The Problems:**
+  1. The real-time status tracker (waiter response toaster) was layer-ordered behind some expanded drink menu cards on mobile touch devices.
+  2. The success toast alert ("Request Sent!") was positioned using `left: 50%; transform: translateX(-50%);` which caused browsers on narrow mobile screens (phones) to cut off the left half of the alert window, pushing it partially off-screen to the left.
+* **The Solutions:**
+  1. **Z-Index Layering Upgrades:** Elevated the status tracker panel (`.guest-tracker-panel`) to `z-index: 10050 !important;` and the success toast (`.toast-overlay`) to `z-index: 10100;`, pushing them completely above all interactive menu elements.
+  2. **Bulletproof Centering Refactor:** Rewrote the success toast centering rules in `css/style.css` (lines 360–385) to use the modern margin-based layout: `left: 0; right: 0; margin: 0 auto; width: fit-content; max-width: 90%;`. Removed the horizontal translation `translateX(-50%)` to avoid sub-pixel positioning glitches.
+* **Results:** Both overlays now float perfectly centered, are fully readable on all devices, and sit on top of all menu items.
+
 ### 4. Fixed Glassmorphic Tableside Widget
 * **Thumb-Reach Zone Control:** Grouped all service request triggers inside a gorgeous, fixed glassmorphic control bar floating elegantly at the bottom of the screen.
 * **Real-time Live Sync Pulse:** Displays the table number (e.g., `Table 3`) dynamically with a vibrant green pulsing sync dot indicating live socket connections.

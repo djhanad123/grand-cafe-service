@@ -2740,6 +2740,17 @@ input:checked + .slider:before {
   }
 }
 
+@keyframes slideUpCard {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .widget-header {
   display: flex;
   justify-content: space-between;
@@ -2897,7 +2908,7 @@ input:checked + .slider:before {
   border: 1px solid rgba(197, 160, 89, 0.3) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  animation: slideUpWidget 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  animation: slideUpCard 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
 
 .menu-container-flat {
