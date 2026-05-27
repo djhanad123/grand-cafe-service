@@ -292,25 +292,52 @@ const mongooseOptions = {
 };
 
 const mongoUri = process.env.MONGODB_URI;
+
+// Set up mongoose connection event listeners once
 if (mongoUri) {
-  console.log('Connecting to MongoDB Atlas...');
-  mongoose.connect(mongoUri, mongooseOptions)
-    .then(async () => {
-      console.log('✅ Connected to MongoDB Atlas successfully.');
-      isMongoConnected = true;
+  mongoose.connection.on('connected', async () => {
+    console.log('✅ Connected to MongoDB Atlas successfully.');
+    try {
+      // Ensure seeders and settings are fully initialized on connection
       await seedAdminUser();
       await seedDefaultTables();
       await seedMenuItems();
       await loadSystemSettings();
-    })
-    .catch((err) => {
-      console.error('❌ Failed to connect to MongoDB Atlas. Falling back to volatile in-memory storage:', err.message);
+      isMongoConnected = true;
+    } catch (err) {
+      console.error('❌ Error initializing database after connection:', err.message);
       isMongoConnected = false;
-    });
-} else {
-  console.log('⚠️ WARNING: MONGODB_URI is not defined. Falling back to volatile in-memory storage.');
-  isMongoConnected = false;
+    }
+  });
+
+  mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB connection error:', err.message);
+    isMongoConnected = false;
+  });
+
+  mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ MongoDB disconnected.');
+    isMongoConnected = false;
+  });
 }
+
+function connectWithRetry() {
+  if (!mongoUri) {
+    console.log('⚠️ WARNING: MONGODB_URI is not defined. Falling back to volatile in-memory storage.');
+    isMongoConnected = false;
+    return;
+  }
+
+  console.log('Connecting to MongoDB Atlas (with automatic retry loop)...');
+  mongoose.connect(mongoUri, mongooseOptions)
+    .catch((err) => {
+      console.error('❌ Failed to connect to MongoDB Atlas. Retrying in 8 seconds...', err.message);
+      isMongoConnected = false;
+      setTimeout(connectWithRetry, 8000);
+    });
+}
+
+connectWithRetry();
 
 // Helpers for fallback handling
 async function getRequests() {
