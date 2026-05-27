@@ -2422,7 +2422,7 @@ p {
   box-shadow: 0 4px 10px rgba(197, 160, 89, 0.25);
 }
 
-/* Menu Items 2-Column Responsive Grid */
+/* Menu Items Responsive Grid */
 .menu-items-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2433,6 +2433,13 @@ p {
   .menu-items-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .menu-items-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
   }
 }
 
