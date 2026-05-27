@@ -360,9 +360,10 @@ p {
 .toast-overlay {
   position: fixed;
   top: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-100px);
-  width: auto;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: fit-content;
   max-width: 90%;
   height: auto;
   background: transparent;
@@ -374,13 +375,14 @@ p {
   z-index: 10100;
   opacity: 0;
   pointer-events: none;
+  transform: translateY(-100px);
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
 }
 
 .toast-overlay.active {
   opacity: 1;
   pointer-events: all;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 
 .toast-content {
